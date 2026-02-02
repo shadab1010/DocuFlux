@@ -1,0 +1,479 @@
+:root {
+    --background: #FFFDF5;
+    --foreground: #171717;
+    --primary: #044E39;
+    --accent: #E8F5E9;
+    --secondary: #F4A261;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.navbar {
+    background-color: transparent !important;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
+.navbar-brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--foreground) !important;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-link {
+    color: #4b5563 !important;
+    /* gray-600 */
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: color 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--primary) !important;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #033c2b;
+    /* Darker shade of primary */
+    border-color: #033c2b;
+}
+
+.btn-danger {
+    background-color: var(--primary);
+    /* Override red to green for consistency if used */
+    border-color: var(--primary);
+}
+
+.card {
+    border: 1px solid #f3f4f6;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    background-color: white;
+    border-radius: 0.75rem;
+}
+
+/* Update text-danger usage to primary color */
+.text-danger {
+    color: var(--primary) !important;
+}
+
+/* =========================================
+   New Tool Interface Design (DocuFlux)
+   ========================================= */
+
+/* Main Container for Tool Pages */
+.tool-container {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.tool-header {
+    margin-bottom: 3rem;
+}
+
+.tool-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--foreground);
+    margin-bottom: 1rem;
+    line-height: 1.1;
+}
+
+.tool-subtitle {
+    font-size: 1.25rem;
+    color: #4b5563;
+    /* gray-600 */
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Upload Area / Drop Zone */
+.upload-box {
+    background-color: #FDFDFD;
+    /* Slightly off-white */
+    border: 2px dashed #CBD5E1;
+    /* gray-300 */
+    border-radius: 1.5rem;
+    padding: 4rem 2rem;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 350px;
+}
+
+.upload-box:hover,
+.upload-box.drag-active {
+    background-color: #F0FDF4;
+    /* light green tint */
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+.upload-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background-color: var(--accent);
+    /* Light green bg */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    color: var(--primary);
+}
+
+.upload-btn-lg {
+    background-color: var(--primary);
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 1rem 3rem;
+    border-radius: 50px;
+    /* Pillow shape */
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(4, 78, 57, 0.2);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.upload-btn-lg:hover {
+    background-color: #033c2b;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(4, 78, 57, 0.3);
+}
+
+.drop-text-hint {
+    margin-top: 1rem;
+    color: #64748B;
+    /* slate-500 */
+    font-size: 0.95rem;
+}
+
+/* Success / Result View */
+.success-container {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Premium File Grid Styling */
+.file-list-container {
+    margin-top: 3rem;
+}
+
+.file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+    padding: 0.5rem;
+}
+
+.file-card-premium {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    position: relative;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+}
+
+.file-card-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px -10px rgba(4, 78, 57, 0.15);
+    border-color: rgba(4, 78, 57, 0.2);
+}
+
+.premium-file-icon {
+    width: 64px;
+    height: 80px;
+    /* Aspect ratio of A4 paper roughly */
+    background: #FFFDF5;
+    border: 1px solid #E2E8F0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: #e11d48;
+    /* PDF Red */
+    position: relative;
+}
+
+.premium-file-icon::after {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(225deg, #cbd5e1 50%, transparent 50%);
+    border-bottom-left-radius: 4px;
+}
+
+.file-info-premium {
+    width: 100%;
+}
+
+.file-name-premium {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.25rem;
+}
+
+.file-size-premium {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.remove-btn-premium {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 32px;
+    height: 32px;
+    background: white;
+    border: 1px solid #fee2e2;
+    color: #ef4444;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.file-card-premium:hover .remove-btn-premium {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Add More Card Styling */
+.add-more-card {
+    border: 2px dashed #bbf7d0;
+    /* light green dashed */
+    cursor: pointer;
+    background-color: #f8fafc;
+}
+
+.add-more-card:hover {
+    background-color: #f0fdf4;
+    border-color: var(--primary);
+    transform: translateY(-5px);
+}
+
+/* ==================== Auth Card Design (Premium) ==================== */
+.auth-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(4, 78, 57, 0.4);
+    /* Primary color with opacity */
+    backdrop-filter: blur(8px);
+    z-index: 1050;
+    display: none;
+    /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.auth-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 440px;
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    position: relative;
+    text-align: center;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.auth-header-icon {
+    width: 56px;
+    height: 56px;
+    background: #F3F4F6;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    color: var(--foreground);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.auth-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #111827;
+    /* Gray-900 */
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.025em;
+}
+
+.auth-subtitle {
+    color: #6B7280;
+    /* Gray-500 */
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.auth-input-group {
+    background: #F3F4F6;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.auth-input-group:focus-within {
+    background: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(4, 78, 57, 0.1);
+}
+
+.auth-input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    font-size: 1rem;
+    color: #374151;
+    outline: none;
+}
+
+.auth-input::placeholder {
+    color: #9CA3AF;
+}
+
+.auth-btn-primary {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    padding: 1rem;
+    border-radius: 12px;
+    border: none;
+    font-size: 1.05rem;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(4, 78, 57, 0.3);
+}
+
+.auth-btn-primary:hover {
+    background: #033c2b;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(4, 78, 57, 0.4);
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    color: #9CA3AF;
+    font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #E5E7EB;
+}
+
+.auth-divider span {
+    padding: 0 1rem;
+}
+
+.social-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.social-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #374151;
+}
+
+.social-btn:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+    transform: translateY(-2px);
+}
