@@ -1,96 +1,212 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Menu, X, User } from "lucide-react";
 import AuthModal from "./AuthModal";
 import ProfileSettingsModal from "./ProfileSettingsModal";
+import AnimatedButton from "./ui/AnimatedButton";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
+  const { isLoggedIn, user, logout: authLogout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authView, setAuthView] = useState<"login" | "signup">("login");
+
+  // Separate states for Desktop Popover and Mobile Modal
+  const [showDesktopProfile, setShowDesktopProfile] = useState(false);
+  const [showMobileProfile, setShowMobileProfile] = useState(false);
+
+
+
+  const [scrolled, setScrolled] = useState(false);
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navLinks = [
+    { name: "Home", href: "/" },
+    { name: "Tools", href: "/tools" },
+    { name: "Pricing", href: "/pricing" },
+    { name: "About", href: "/about" },
+    { name: "Contact", href: "/contact" },
+  ];
+
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" });
+      authLogout();
+      setShowDesktopProfile(false);
+      setShowMobileProfile(false);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <>
-      <nav className="fixed w-full bg-white shadow-md z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-blue-600">
-                DocuFlux
+      <nav
+        className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? "glass shadow-sm py-4" : "bg-transparent py-6"
+          }`}
+      >
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+          <div className="flex justify-between items-center">
+            {/* Logo */}
+            <div className="flex items-center gap-2">
+              <Link href="/" className="flex items-center gap-2 group">
+                <div className="w-8 h-8 text-emerald-800">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600" />
+                    <path d="M12 2V17.77" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <span className="text-2xl font-bold text-gray-900 font-display tracking-tight">
+                  DocuFlux
+                </span>
               </Link>
             </div>
 
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/" className="text-gray-700 hover:text-blue-600">
-                Home
-              </Link>
-              <Link href="/solutions" className="text-gray-700 hover:text-blue-600">
-                Solutions
-              </Link>
-              <Link href="/pricing" className="text-gray-700 hover:text-blue-600">
-                Pricing
-              </Link>
-              <Link href="/how-it-works" className="text-gray-700 hover:text-blue-600">
-                How It Works
-              </Link>
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center space-x-10">
+              {navLinks.map((link, index) => (
+                <motion.div
+                  key={link.name}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 * index, ease: "easeOut" }}
+                >
+                  <Link
+                    href={link.href}
+                    className="text-gray-600 hover:text-emerald-700 font-medium text-sm transition-all hover:scale-105 inline-block"
+                  >
+                    {link.name}
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Auth Buttons */}
+            <div className="hidden lg:flex items-center gap-4 relative">
               {isLoggedIn ? (
-                <button
-                  onClick={() => setShowProfileModal(true)}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                >
-                  Profile
-                </button>
+                <>
+                  <AnimatedButton
+                    onClick={() => setShowDesktopProfile(!showDesktopProfile)}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                  >
+                    <User size={16} className="mr-2" />
+                    {user?.name || "My Account"}
+                  </AnimatedButton>
+
+                  {/* Desktop Popover */}
+                  <ProfileSettingsModal
+                    isOpen={showDesktopProfile}
+                    onClose={() => setShowDesktopProfile(false)}
+                    onLogout={handleLogout}
+                    mode="popover"
+                  />
+                </>
               ) : (
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                >
-                  Sign In
-                </button>
+                <>
+                  <AnimatedButton
+                    onClick={() => {
+                      setAuthView("login");
+                      setShowAuthModal(true);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full border-emerald-700 text-emerald-800 hover:bg-emerald-50"
+                  >
+                    <User size={16} className="mr-2" />
+                    Login
+                  </AnimatedButton>
+                  <AnimatedButton
+                    onClick={() => {
+                      setAuthView("signup");
+                      setShowAuthModal(true);
+                    }}
+                    variant="primary"
+                    size="sm"
+                    className="rounded-full shadow-lg shadow-emerald-900/10"
+                  >
+                    Sign Up
+                  </AnimatedButton>
+                </>
               )}
             </div>
 
-            <div className="md:hidden flex items-center">
-              <button onClick={() => setIsOpen(!isOpen)}>
+            {/* Mobile Menu Button */}
+            <div className="lg:hidden flex items-center">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="text-gray-600 hover:text-emerald-700 p-2"
+              >
                 {isOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
             </div>
           </div>
         </div>
 
+        {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <Link href="/" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">
-                Home
-              </Link>
-              <Link href="/solutions" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">
-                Solutions
-              </Link>
-              <Link href="/pricing" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">
-                Pricing
-              </Link>
-              <Link href="/how-it-works" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">
-                How It Works
-              </Link>
-              {isLoggedIn ? (
-                <button
-                  onClick={() => setShowProfileModal(true)}
-                  className="w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100"
+          <div className="lg:hidden absolute top-full left-0 w-full glass border-t border-gray-100 shadow-xl">
+            <div className="px-6 py-6 space-y-4">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="block text-lg font-medium text-gray-600 hover:text-emerald-700"
+                  onClick={() => setIsOpen(false)}
                 >
-                  Profile
-                </button>
-              ) : (
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100"
-                >
-                  Sign In
-                </button>
-              )}
+                  {link.name}
+                </Link>
+              ))}
+              <hr className="border-gray-100 my-4" />
+              <div className="flex flex-col gap-3">
+                {isLoggedIn ? (
+                  <button
+                    onClick={() => {
+                      setShowMobileProfile(true);
+                      setIsOpen(false);
+                    }}
+                    className="w-full py-3 rounded-xl border border-emerald-600 text-emerald-700 font-bold text-center"
+                  >
+                    My Account
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setAuthView("login");
+                        setShowAuthModal(true);
+                        setIsOpen(false);
+                      }}
+                      className="w-full py-3 rounded-xl border border-emerald-600 text-emerald-700 font-bold text-center"
+                    >
+                      Login
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAuthView("signup");
+                        setShowAuthModal(true);
+                        setIsOpen(false);
+                      }}
+                      className="w-full py-3 rounded-xl bg-emerald-900 text-white font-bold text-center"
+                    >
+                      Sign Up
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -100,18 +216,16 @@ export default function Navbar() {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onLogin={() => {
-          setIsLoggedIn(true);
           setShowAuthModal(false);
         }}
+        initialView={authView}
       />
 
       <ProfileSettingsModal
-        isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        onLogout={() => {
-          setIsLoggedIn(false);
-          setShowProfileModal(false);
-        }}
+        isOpen={showMobileProfile}
+        onClose={() => setShowMobileProfile(false)}
+        onLogout={handleLogout}
+        mode="modal"
       />
     </>
   );

@@ -1,54 +1,73 @@
 "use client";
 
-import { FileText, Zap, Shield, Cloud } from "lucide-react";
+import { Shield, Zap, Layers, Globe, Layout, Clock } from "lucide-react";
 
 const features = [
   {
-    icon: FileText,
-    title: "Multiple Formats",
-    description: "Convert between PDF, Word, Excel, PowerPoint, and image formats",
+    icon: Shield,
+    title: "Bank-Grade Security",
+    description: "We use 256-bit SSL encryption to ensure that your files are 100% safe.",
   },
   {
     icon: Zap,
     title: "Lightning Fast",
-    description: "Process your documents in seconds with our optimized servers",
+    description: "Convert, merge, and edit PDFs in seconds with our optimized processing engine.",
   },
   {
-    icon: Shield,
-    title: "Secure & Private",
-    description: "Your files are encrypted and automatically deleted after processing",
+    icon: Layers,
+    title: "High Capacity",
+    description: "Process files up to 100MB and batch convert multiple documents at once.",
   },
   {
-    icon: Cloud,
-    title: "Cloud Based",
-    description: "No installation required. Access your tools from anywhere",
+    icon: Globe,
+    title: "Work from Anywhere",
+    description: "Access DocuFlux from any device, anywhere in the world. No installation needed.",
+  },
+  {
+    icon: Layout,
+    title: "User-Friendly Interface",
+    description: "Clean, intuitive design that makes complex PDF tasks simple for everyone.",
+  },
+  {
+    icon: Clock,
+    title: "24/7 Availability",
+    description: "Our cloud servers are always running, so you can work whenever inspiration strikes.",
   },
 ];
 
 export default function Features() {
   return (
-    <section className="py-16 bg-white">
+    <section id="features" className="py-24 bg-[#FFFCF5]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Why Choose DocuFlux?
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-emerald-950 mb-4 font-display font-serif">
+            Why Choose DocuFlux
           </h2>
-          <p className="text-xl text-gray-600">
-            Powerful features designed for your document workflow
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            We don't just process PDFs; we provide a complete document management solution.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="p-6 border rounded-lg hover:shadow-lg transition"
-            >
-              <feature.icon className="w-12 h-12 text-blue-600 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <div
+                key={index}
+                className="p-8 bg-white rounded-2xl shadow-[0_2px_10px_rgb(0,0,0,0.03)] border border-gray-100 hover:border-emerald-100 hover:shadow-lg transition-all duration-300 group"
+              >
+                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mb-6 text-emerald-700 group-hover:bg-emerald-100 transition-colors">
+                  <Icon className="w-6 h-6" strokeWidth={1.5} />
+                </div>
+                <h3 className="text-xl font-bold mb-3 font-display text-gray-900">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-500 leading-relaxed text-sm">
+                  {feature.description}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

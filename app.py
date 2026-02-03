@@ -40,8 +40,10 @@ from utils import (
 from utils.pdf_converter import (
     add_watermark_to_pdf, add_page_numbers_to_pdf, add_image_to_pdf,
     draw_rectangle_on_pdf, draw_circle_on_pdf, highlight_text_in_pdf,
-    blank_page_in_pdf, draw_line_on_pdf, apply_multiple_edits
+    blank_page_in_pdf, draw_line_on_pdf, apply_multiple_edits,
+    pdf_to_images
 )
+from libreoffice_converter import LibreOfficeConverter
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -58,6 +60,21 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Database Setup
 DB_PATH = os.path.join(BASE_DIR, "users.db")
 db = DatabaseManager(DB_PATH)
+
+# Check for LibreOffice at startup
+try:
+    from libreoffice_converter import LibreOfficeConverter
+    if not LibreOfficeConverter.is_available():
+        print("\n" + "!"*60)
+        print("WARNING: LibreOffice not found!")
+        print("Scanned PDF conversion will fall back to image-mode (non-editable).")
+        print("To enable full OCR/Conversion, please install LibreOffice:")
+        print("https://www.libreoffice.org/download/download/")
+        print("!"*60 + "\n")
+    else:
+        print(f"\n[INFO] LibreOffice detected at: {LibreOfficeConverter.find_libreoffice()}\n")
+except Exception as e:
+    print(f"\n[WARNING] Could not verify LibreOffice status: {e}\n")
 
 # --- AUTH ROUTES ---
 
@@ -399,7 +416,197 @@ def convert_p2e():
 
 @app.route('/convert-pdf-to-powerpoint', methods=['POST'])
 def convert_p2ppt():
-    return jsonify({"error": "Feature coming soon"}), 200
+    try:
+        if 'pdf' not in request.files: return jsonify({"error": "No file"}), 400
+        file = request.files['pdf']
+        success, path = secure_upload_file(file, UPLOAD_FOLDER)
+        if not success: return jsonify({"error": "Upload failed"}), 400
+        
+        output_path = os.path.splitext(path)[0] + ".pptx"
+        success = LibreOfficeConverter.convert(path, output_path, output_format="pptx")
+        
+        if success:
+            cleanup_files([path])
+            return send_file(output_path, as_attachment=True, download_name="converted.pptx")
+        else:
+            cleanup_files([path])
+            return jsonify({"error": "Conversion failed"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/convert-excel-to-pdf', methods=['POST'])
+def convert_e2p():
+    try:
+        if 'excel' not in request.files: return jsonify({"error": "No file"}), 400
+        file = request.files['excel']
+        success, path = secure_upload_file(file, UPLOAD_FOLDER, allowed_exts={'xlsx', 'xls'})
+        if not success: return jsonify({"error": "Upload failed"}), 400
+        
+        output_path = os.path.splitext(path)[0] + ".pdf"
+        success = LibreOfficeConverter.convert(path, output_path, output_format="pdf")
+        
+        if success:
+            cleanup_files([path])
+            return send_file(output_path, as_attachment=True, download_name="converted.pdf")
+        else:
+            cleanup_files([path])
+            return jsonify({"error": "Conversion failed"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/convert-powerpoint-to-pdf', methods=['POST'])
+def convert_ppt2p():
+    try:
+        if 'powerpoint' not in request.files: return jsonify({"error": "No file"}), 400
+        file = request.files['powerpoint']
+        success, path = secure_upload_file(file, UPLOAD_FOLDER, allowed_exts={'pptx', 'ppt'})
+        if not success: return jsonify({"error": "Upload failed"}), 400
+        
+        output_path = os.path.splitext(path)[0] + ".pdf"
+        success = LibreOfficeConverter.convert(path, output_path, output_format="pdf")
+        
+        if success:
+            cleanup_files([path])
+            return send_file(output_path, as_attachment=True, download_name="converted.pdf")
+        else:
+            cleanup_files([path])
+            return jsonify({"error": "Conversion failed"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/convert-jpg-to-pdf', methods=['POST'])
+def convert_j2p():
+    try:
+        if 'images' not in request.files: return jsonify({"error": "No files"}), 400
+        files = request.files.getlist('images')
+        
+        paths = []
+        for file in files:
+            success, path = secure_upload_file(file, UPLOAD_FOLDER, allowed_exts={'jpg', 'jpeg', 'png'})
+            if success: paths.append(path)
+            
+        if not paths: return jsonify({"error": "No valid images"}), 400
+        
+        output_path = os.path.join(UPLOAD_FOLDER, f"converted_{os.urandom(4).hex()}.pdf")
+        with open(output_path, "wb") as f:
+            f.write(img2pdf.convert(paths))
+            
+        cleanup_files(paths)
+        return send_file(output_path, as_attachment=True, download_name="converted.pdf")
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/watermark-pdf', methods=['POST'])
+def watermark_pdf_route():
+    try:
+        if 'pdf' not in request.files: return jsonify({"error": "No file"}), 400
+        text = request.form.get('text', 'DocuFlux')
+        
+        file = request.files['pdf']
+        success, path = secure_upload_file(file, UPLOAD_FOLDER)
+        
+        output_path = os.path.join(UPLOAD_FOLDER, f"watermarked_{os.urandom(4).hex()}.pdf")
+        success, result = add_watermark_to_pdf(path, output_path, text)
+        
+        if success:
+            cleanup_files([path])
+            return send_file(output_path, as_attachment=True, download_name="watermarked.pdf")
+        else:
+            cleanup_files([path])
+            return jsonify({"error": result}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/rotate-pdf', methods=['POST'])
+def rotate_pdf_route():
+    try:
+        if 'pdf' not in request.files: return jsonify({"error": "No file"}), 400
+        angle = int(request.form.get('angle', 90))
+        
+        file = request.files['pdf']
+        success, path = secure_upload_file(file, UPLOAD_FOLDER)
+        
+        reader = PdfReader(path)
+        writer = PdfWriter()
+        for page in reader.pages:
+            page.rotate(angle)
+            writer.add_page(page)
+            
+        out = io.BytesIO()
+        writer.write(out)
+        out.seek(0)
+        cleanup_files([path])
+        return send_file(out, as_attachment=True, download_name="rotated.pdf", mimetype="application/pdf")
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/protect-pdf', methods=['POST'])
+def protect_pdf_route():
+    try:
+        if 'pdf' not in request.files: return jsonify({"error": "No file"}), 400
+        password = request.form.get('password')
+        if not password: return jsonify({"error": "Password required"}), 400
+        
+        file = request.files['pdf']
+        success, path = secure_upload_file(file, UPLOAD_FOLDER)
+        
+        reader = PdfReader(path)
+        writer = PdfWriter()
+        for page in reader.pages:
+            writer.add_page(page)
+        writer.encrypt(password)
+        
+        out = io.BytesIO()
+        writer.write(out)
+        out.seek(0)
+        cleanup_files([path])
+        return send_file(out, as_attachment=True, download_name="protected.pdf", mimetype="application/pdf")
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/unlock-pdf', methods=['POST'])
+def unlock_pdf_route():
+    try:
+        if 'pdf' not in request.files: return jsonify({"error": "No file"}), 400
+        password = request.form.get('password', '')
+        
+        file = request.files['pdf']
+        success, path = secure_upload_file(file, UPLOAD_FOLDER)
+        
+        reader = PdfReader(path)
+        if reader.is_encrypted:
+            reader.decrypt(password)
+            
+        writer = PdfWriter()
+        for page in reader.pages:
+            writer.add_page(page)
+            
+        out = io.BytesIO()
+        writer.write(out)
+        out.seek(0)
+        cleanup_files([path])
+        return send_file(out, as_attachment=True, download_name="unlocked.pdf", mimetype="application/pdf")
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/page-numbers', methods=['POST'])
+def add_page_numbers_route():
+    try:
+        if 'pdf' not in request.files: return jsonify({"error": "No file"}), 400
+        file = request.files['pdf']
+        success, path = secure_upload_file(file, UPLOAD_FOLDER)
+        
+        output_path = os.path.join(UPLOAD_FOLDER, f"numbered_{os.urandom(4).hex()}.pdf")
+        success, result = add_page_numbers_to_pdf(path, output_path)
+        
+        if success:
+            cleanup_files([path])
+            return send_file(output_path, as_attachment=True, download_name="numbered.pdf")
+        else:
+            cleanup_files([path])
+            return jsonify({"error": result}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/convert-pdf-to-image', methods=['POST'])
 def convert_p2img():
@@ -418,28 +625,15 @@ def convert_p2img():
         output_folder = os.path.join(UPLOAD_FOLDER, output_folder_name)
         os.makedirs(output_folder, exist_ok=True)
         
-        # Use simple function based on format
-        if image_format in ['jpg', 'jpeg']:
-            success, result = pdf_to_jpg(path, output_folder)
-        else:
-            success, result = pdf_to_png(path, output_folder)
+        success, result = pdf_to_images(path, output_folder, image_format=image_format)
             
         if success:
-            # Result is a list of image paths. Zip them if multiple, or return single if just one?
-            # Start logic: always ZIP for consistency if it's "PDF to Images"
-            # Unless it's a single page PDF?
-            # Let's just ZIP them using create_image_zip
-            
             image_files = result
             zip_path = os.path.join(UPLOAD_FOLDER, f"{output_folder_name}.zip")
             success_zip, zip_result = create_image_zip(image_files, zip_path)
             
             if success_zip:
                 cleanup_files([path])
-                # cleanup the folder of images? maybe keep for a bit or delete?
-                # For now, let's just leave them - or better, cleanup images after zip
-                # But cleanup_files might not handle folders.
-                # Let's just return the zip.
                 return send_file(zip_result, as_attachment=True, download_name="images.zip")
             else:
                 cleanup_files([path])

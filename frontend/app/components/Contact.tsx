@@ -1,82 +1,149 @@
 "use client";
 
 import { useState } from "react";
+import { Mail, Phone, MapPin, Send } from "lucide-react";
+import AnimatedButton from "./ui/AnimatedButton";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    subject: "",
     message: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
     console.log("Form submitted:", formData);
   };
 
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="contact" className="py-16 bg-[#FFFCF5]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Get in Touch
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-display font-serif">
+            Get In Touch
           </h2>
-          <p className="text-xl text-gray-600">
-            Have questions? We'd love to hear from you.
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            We'll create high-quality linkable content and build at least 40 high-authority links to each asset, paving the way for you to grow.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
+        <div className="max-w-6xl mx-auto bg-white rounded-[2rem] shadow-xl overflow-hidden flex flex-col lg:flex-row min-h-[500px]">
+          {/* Left Panel: Contact Information - NOW PREMIUM DARK EMERALD */}
+          <div className="lg:w-[40%] bg-[#022c22] relative p-10 text-white flex flex-col justify-between overflow-hidden">
+            {/* Background Decoration */}
+            <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/10 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl pointer-events-none" />
+            <div className="absolute top-10 right-10 w-20 h-20 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="relative z-10">
+              <h3 className="text-2xl font-bold mb-4 font-display">Contact Information</h3>
+              <p className="text-emerald-100 mb-8 leading-relaxed opacity-90">
+                Fill up the form and our Team will get back to you within 24 hours.
+              </p>
+
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <Phone className="w-6 h-6 mt-1 text-emerald-200" />
+                  <div>
+                    <p className="text-sm opacity-70 mb-1 uppercase tracking-wider text-emerald-100">Call Us</p>
+                    <a href="tel:+15550000000" className="text-lg font-medium hover:text-white transition">+1 (555) 000-0000</a>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <Mail className="w-6 h-6 mt-1 text-emerald-200" />
+                  <div>
+                    <p className="text-sm opacity-70 mb-1 uppercase tracking-wider text-emerald-100">Email Us</p>
+                    <a href="mailto:hello@docuflux.com" className="text-lg font-medium hover:text-white transition">hello@docuflux.com</a>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <MapPin className="w-6 h-6 mt-1 text-emerald-200" />
+                  <div>
+                    <p className="text-sm opacity-70 mb-1 uppercase tracking-wider text-emerald-100">Visit Us</p>
+                    <p className="text-lg font-medium leading-snug">100 Smith Street,<br />Melbourne VIC 3000 AU</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Social Icons */}
+            <div className="relative z-10 mt-12 flex gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="w-8 h-8 rounded-full border border-emerald-500/50 hover:bg-emerald-800 transition cursor-pointer flex items-center justify-center text-emerald-200">
+                  <div className="w-4 h-4 bg-current rounded-full opacity-50" />
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-            />
-          </div>
+          {/* Right Panel: Form */}
+          <div className="lg:w-[60%] p-10 lg:p-12 bg-white">
+            <form onSubmit={handleSubmit} className="h-full flex flex-col justify-center">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="group">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-500 mb-2 group-focus-within:text-emerald-700 transition-colors">Your Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    placeholder="John Doe"
+                    className="w-full py-3 bg-transparent border-b border-gray-200 focus:border-emerald-700 outline-none transition-all placeholder:text-gray-300 text-gray-900 font-medium"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+                <div className="group">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-500 mb-2 group-focus-within:text-emerald-700 transition-colors">Your Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    placeholder="john@example.com"
+                    className="w-full py-3 bg-transparent border-b border-gray-200 focus:border-emerald-700 outline-none transition-all placeholder:text-gray-300 text-gray-900 font-medium"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                </div>
+              </div>
 
-          <div>
-            <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-              Message
-            </label>
-            <textarea
-              id="message"
-              rows={5}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              value={formData.message}
-              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              required
-            />
-          </div>
+              <div className="mb-8 group">
+                <label htmlFor="subject" className="block text-sm font-medium text-gray-500 mb-2 group-focus-within:text-emerald-700 transition-colors">Your Subject</label>
+                <input
+                  type="text"
+                  id="subject"
+                  placeholder="I want to hire you quickly"
+                  className="w-full py-3 bg-transparent border-b border-gray-200 focus:border-emerald-700 outline-none transition-all placeholder:text-gray-300 text-gray-900 font-medium"
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                />
+              </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-          >
-            Send Message
-          </button>
-        </form>
+              <div className="mb-8 group">
+                <label htmlFor="message" className="block text-sm font-medium text-gray-600 mb-4 group-focus-within:text-emerald-700 transition-colors">Message</label>
+                <textarea
+                  id="message"
+                  rows={2}
+                  placeholder="Write here your message"
+                  className="w-full py-3 bg-transparent border-b border-gray-200 focus:border-emerald-700 outline-none transition-all resize-none placeholder:text-gray-300 text-gray-900 font-medium"
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <AnimatedButton
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  className="w-full md:w-auto shadow-lg shadow-emerald-900/20"
+                >
+                  Send Message <Send className="w-4 h-4 ml-2" />
+                </AnimatedButton>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </section>
   );

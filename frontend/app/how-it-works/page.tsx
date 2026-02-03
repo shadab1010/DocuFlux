@@ -44,13 +44,16 @@ export default function HowItWorksPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {steps.map((step, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-lg p-8 text-center">
-                <step.icon className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                <p className="text-gray-600">{step.description}</p>
-              </div>
-            ))}
+            {steps.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <div key={index} className="bg-white rounded-lg shadow-lg p-8 text-center">
+                  <Icon className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold mb-3">{step.title}</h3>
+                  <p className="text-gray-600">{step.description}</p>
+                </div>
+              );
+            })}
           </div>
 
           <div className="bg-blue-600 text-white rounded-lg p-12 text-center">

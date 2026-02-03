@@ -9,6 +9,9 @@ from pypdf import PdfReader, PdfWriter
 from pdf2docx.converter import Converter
 from openpyxl import Workbook
 import pdfplumber
+import io
+from docx import Document
+from docx.shared import Inches
 
 
 def merge_pdfs(pdf_files, output_path):
@@ -77,6 +80,32 @@ def compress_pdf(pdf_path, output_path):
         return False, str(e)
 
 
+
+def pdf_to_word_as_images(pdf_path, output_path):
+    """Fallback: Convert PDF pages to images and insert into Word"""
+    try:
+        doc = Document()
+        pdf_doc = fitz.open(pdf_path)
+        
+        for page_num in range(len(pdf_doc)):
+            page = pdf_doc[page_num]
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2)) # 2x zoom for better quality
+            img_data = pix.tobytes("png")
+            
+            # Add image to Word doc
+            img_stream = io.BytesIO(img_data)
+            doc.add_picture(img_stream, width=Inches(6))
+            
+            if page_num < len(pdf_doc) - 1:
+                doc.add_page_break()
+                
+        doc.save(output_path)
+        pdf_doc.close()
+        return True, output_path
+    except Exception as e:
+        return False, str(e)
+
+
 def pdf_to_images(pdf_path, output_folder, image_format="png"):
     """Convert PDF pages to images"""
     try:
@@ -99,14 +128,57 @@ def pdf_to_images(pdf_path, output_folder, image_format="png"):
 
 
 def pdf_to_word(pdf_path, output_path):
-    """Convert PDF to Word document"""
+    """Convert PDF to Word document with robust fallback"""
     try:
-        converter = Converter(pdf_path)
-        converter.convert(output_path, start=0, end=None)
-        converter.close()
-        return True, output_path
+        # Pre-validate PDF
+        try:
+            with fitz.open(pdf_path) as doc:
+                if doc.page_count < 1:
+                    return False, "PDF is empty (0 pages)."
+        except Exception as e:
+            return False, f"Invalid PDF file: {str(e)}"
+
+        # Attempt 1: pdf2docx (Best for native PDFs)
+        try:
+            converter = Converter(pdf_path)
+            converter.convert(output_path, start=0, end=None)
+            converter.close()
+            # Double check output
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                 return True, output_path
+        except Exception as e:
+            print(f"pdf2docx failed: {e}. Attempting fallback...")
+        
+        # Attempt 2: LibreOffice Fallback (Best for scanned/complex PDFs)
+        try:
+            # Dynamic import to handle path differences
+            try:
+                from libreoffice_converter import LibreOfficeConverter
+            except ImportError:
+                # Try relative import if in package
+                import sys
+                sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                from libreoffice_converter import LibreOfficeConverter
+
+            if LibreOfficeConverter.is_available():
+                success = LibreOfficeConverter.convert(pdf_path, output_path, output_format="docx")
+                if success:
+                    return True, output_path
+            
+            # Attempt 3: Image-based wrapper (Final fallback for scans)
+            print("LibreOffice unavailable/failed. Falling back to Image-Wrapper...")
+            success, result = pdf_to_word_as_images(pdf_path, output_path)
+            if success:
+                return True, result
+            
+            return False, "All conversion methods failed (pdf2docx, LibreOffice, Image-Wrapper)."
+                
+        except Exception as fallback_error:
+            return False, f"All conversion methods failed. Error: {str(fallback_error)}"
+
     except Exception as e:
-        return False, str(e)
+        # Catch-all for top level errors
+        return False, f"Conversion error: {str(e)}"
 
 
 def pdf_to_excel(pdf_path, output_path):
