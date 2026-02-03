@@ -29,8 +29,8 @@ COPY . /app/
 # Create uploads directory
 RUN mkdir -p /app/uploads
 
-# Expose port 5000
-EXPOSE 5000
+# Expose Render's expected port
+EXPOSE 10000
 
 # Run gunicorn when the container launches
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:10000"]
