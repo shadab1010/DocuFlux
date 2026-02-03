@@ -5,6 +5,7 @@ import { X, LogIn, Eye, EyeOff, Loader2, Mail, Lock, User, Sparkles, ShieldCheck
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import AnimatedButton from "./ui/AnimatedButton";
+import { API_URL } from "@/lib/config";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -54,7 +55,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
       : { email: formData.email, password: formData.password };
 
     try {
-      const res = await fetch(`http://localhost:5000${endpoint}`, {
+      const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

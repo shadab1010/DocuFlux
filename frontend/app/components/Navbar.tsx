@@ -8,6 +8,7 @@ import AuthModal from "./AuthModal";
 import ProfileSettingsModal from "./ProfileSettingsModal";
 import AnimatedButton from "./ui/AnimatedButton";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "@/lib/config";
 
 export default function Navbar() {
   const { isLoggedIn, user, logout: authLogout } = useAuth();
@@ -42,7 +43,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" });
+      await fetch(`${API_URL}/logout`, { method: "POST", credentials: "include" });
       authLogout();
       setShowDesktopProfile(false);
       setShowMobileProfile(false);

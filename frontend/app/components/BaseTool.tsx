@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { API_URL } from "@/lib/config";
 import ToolLayout from "./ToolLayout";
 import { Upload, CheckCircle2, Loader2, X, Plus, FileText, Download, RotateCcw, Sparkles } from "lucide-react";
 import AnimatedButton from "./ui/AnimatedButton";
@@ -76,7 +77,7 @@ export default function BaseTool({
         });
 
         try {
-            const res = await fetch(`http://localhost:5000${endpoint}`, {
+            const res = await fetch(`${API_URL}${endpoint}`, {
                 method: "POST",
                 body: formData,
             });

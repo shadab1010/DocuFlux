@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { API_URL } from "@/lib/config";
 
 interface User {
     id: number;
@@ -27,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const checkAuth = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch("http://localhost:5000/me", {
+            const res = await fetch(`${API_URL}/me`, {
                 credentials: "include",
             });
             const data = await res.json();

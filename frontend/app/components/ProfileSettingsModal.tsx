@@ -4,6 +4,7 @@ import { useState } from "react";
 import { User, Shield, AlertTriangle, LogOut, Loader2, CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "@/lib/config";
 
 interface ProfileSettingsModalProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ export default function ProfileSettingsModal({
         password: activeTab === "security" ? password : null,
       };
 
-      const res = await fetch("http://localhost:5000/update-profile", {
+      const res = await fetch(`${API_URL}/update-profile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -78,7 +79,7 @@ export default function ProfileSettingsModal({
     setMessage(null);
 
     try {
-      const res = await fetch("http://localhost:5000/delete-account", {
+      const res = await fetch(`${API_URL}/delete-account`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
