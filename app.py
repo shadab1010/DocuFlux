@@ -2,10 +2,24 @@ from flask import Flask, request, send_file, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+import warnings
+from cryptography.utils import CryptographyDeprecationWarning
+warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
+
+# Monkey patch for pdf2docx compatibility with Python 3.10+
+import collections
+import collections.abc
+if not hasattr(collections, 'Iterable'):
+    collections.Iterable = collections.abc.Iterable
+
 import io
 import zipfile
 import sqlite3
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 import img2pdf
 from pdf2image import convert_from_bytes
 from docx2pdf import convert
@@ -31,7 +45,7 @@ from utils.pdf_converter import (
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = 'super-secret-key-change-this' 
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "default-insecure-key-for-dev-only")
 CORS(app, supports_credentials=True)
 
 # Configure Upload Folder
@@ -325,17 +339,63 @@ def compress_pdf_route():
 
 @app.route('/convert-pdf-to-word', methods=['POST'])
 def convert_p2w():
-    # Placeholder
-    return jsonify({"error": "Feature coming soon"}), 200
+    try:
+        if 'pdf' not in request.files: return jsonify({"error": "No file"}), 400
+        file = request.files['pdf']
+        success, path = secure_upload_file(file, UPLOAD_FOLDER)
+        if not success: return jsonify({"error": "Upload failed"}), 400
+        
+        output_path = os.path.splitext(path)[0] + ".docx"
+        success, result = pdf_to_word(path, output_path)
+        
+        if success:
+            cleanup_files([path])
+            return send_file(output_path, as_attachment=True, download_name="converted.docx")
+        else:
+            cleanup_files([path])
+            return jsonify({"error": result}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/convert-word-to-pdf', methods=['POST'])
 def convert_w2p():
-    # Placeholder
-    return jsonify({"error": "Feature coming soon"}), 200
+    try:
+        if 'word' not in request.files: return jsonify({"error": "No file"}), 400
+        file = request.files['word']
+        success, path = secure_upload_file(file, UPLOAD_FOLDER)
+        if not success: return jsonify({"error": "Upload failed"}), 400
+        
+        output_path = os.path.splitext(path)[0] + ".pdf"
+        try:
+            convert(path, output_path)
+            cleanup_files([path])
+            return send_file(output_path, as_attachment=True, download_name="converted.pdf")
+        except Exception as conversion_error:
+            cleanup_files([path])
+            return jsonify({"error": str(conversion_error)}), 500
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/convert-pdf-to-excel', methods=['POST'])
 def convert_p2e():
-    return jsonify({"error": "Feature coming soon"}), 200
+    try:
+        if 'pdf' not in request.files: return jsonify({"error": "No file"}), 400
+        file = request.files['pdf']
+        success, path = secure_upload_file(file, UPLOAD_FOLDER)
+        if not success: return jsonify({"error": "Upload failed"}), 400
+        
+        output_path = os.path.splitext(path)[0] + ".xlsx"
+        success, result = pdf_to_excel(path, output_path)
+        
+        if success:
+            cleanup_files([path])
+            return send_file(output_path, as_attachment=True, download_name="converted.xlsx")
+        else:
+            cleanup_files([path])
+            return jsonify({"error": result}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/convert-pdf-to-powerpoint', methods=['POST'])
 def convert_p2ppt():
@@ -343,7 +403,55 @@ def convert_p2ppt():
 
 @app.route('/convert-pdf-to-image', methods=['POST'])
 def convert_p2img():
-     return jsonify({"error": "Feature coming soon"}), 200
+    try:
+        if 'pdf' not in request.files: return jsonify({"error": "No file"}), 400
+        file = request.files['pdf']
+        image_format = request.form.get('format', 'png').lower()
+        if image_format not in ['png', 'jpg', 'jpeg']:
+            image_format = 'png'
+            
+        success, path = secure_upload_file(file, UPLOAD_FOLDER)
+        if not success: return jsonify({"error": "Upload failed"}), 400
+        
+        # Create a subfolder for images
+        output_folder_name = f"images_{os.urandom(4).hex()}"
+        output_folder = os.path.join(UPLOAD_FOLDER, output_folder_name)
+        os.makedirs(output_folder, exist_ok=True)
+        
+        # Use simple function based on format
+        if image_format in ['jpg', 'jpeg']:
+            success, result = pdf_to_jpg(path, output_folder)
+        else:
+            success, result = pdf_to_png(path, output_folder)
+            
+        if success:
+            # Result is a list of image paths. Zip them if multiple, or return single if just one?
+            # Start logic: always ZIP for consistency if it's "PDF to Images"
+            # Unless it's a single page PDF?
+            # Let's just ZIP them using create_image_zip
+            
+            image_files = result
+            zip_path = os.path.join(UPLOAD_FOLDER, f"{output_folder_name}.zip")
+            success_zip, zip_result = create_image_zip(image_files, zip_path)
+            
+            if success_zip:
+                cleanup_files([path])
+                # cleanup the folder of images? maybe keep for a bit or delete?
+                # For now, let's just leave them - or better, cleanup images after zip
+                # But cleanup_files might not handle folders.
+                # Let's just return the zip.
+                return send_file(zip_result, as_attachment=True, download_name="images.zip")
+            else:
+                cleanup_files([path])
+                return jsonify({"error": "Failed to zip images"}), 500
+        else:
+            cleanup_files([path])
+            return jsonify({"error": result}), 500
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    debug_mode = os.getenv("FLASK_DEBUG", "False").lower() in ("true", "1", "t")
+    port = int(os.getenv("PORT", 5000))
+    app.run(debug=debug_mode, port=port)
