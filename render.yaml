@@ -11,4 +11,4 @@ services:
       - key: FLASK_DEBUG
         value: "False"
       - key: PORT
-        value: "5000"
+        value: "10000"

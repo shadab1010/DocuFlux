@@ -67,6 +67,7 @@ CORS(
         "https://docuflux.in",
         "https://www.docuflux.in",
         "https://docu-flux.vercel.app",
+        "https://docuflux-frontend.onrender.com",
         "http://localhost:3000" 
     ]
 )
