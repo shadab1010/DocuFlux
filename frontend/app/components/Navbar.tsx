@@ -43,7 +43,11 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_URL}/logout`, { method: "POST", credentials: "include" });
+      await fetch(`${API_URL}/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include"
+      });
       authLogout();
       setShowDesktopProfile(false);
       setShowMobileProfile(false);

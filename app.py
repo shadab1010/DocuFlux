@@ -1,5 +1,6 @@
 from flask import Flask, request, send_file, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
@@ -48,7 +49,27 @@ from libreoffice_converter import LibreOfficeConverter
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "default-insecure-key-for-dev-only")
-CORS(app, supports_credentials=True)
+
+# Session Config for Cross-Domain (Vercel <-> Render)
+app.config.update(
+    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SECURE=True,
+)
+
+# Start ProxyFix
+# This fixes request.scheme to be 'https' when running behind a proxy (like Render)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+CORS(
+    app,
+    supports_credentials=True,
+    origins=[
+        "https://docuflux.in",
+        "https://www.docuflux.in",
+        "https://docu-flux.vercel.app",
+        "http://localhost:3000" 
+    ]
+)
 
 # Configure Upload Folder
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

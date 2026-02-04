@@ -58,6 +58,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
       const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
