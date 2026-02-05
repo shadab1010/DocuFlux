@@ -288,6 +288,13 @@ def auth_google():
 def auth_google_callback():
     """Handle Google OAuth Callback"""
     try:
+        # Debug: Check if environment variables are loaded
+        client_id = os.getenv("GOOGLE_CLIENT_ID")
+        if not client_id:
+            return jsonify({"error": "GOOGLE_CLIENT_ID not configured"}), 500
+        
+        print(f"[DEBUG] Using Client ID: {client_id[:20]}...")  # Log first 20 chars
+        
         token = oauth.google.authorize_access_token()
         user_info = oauth.google.userinfo()
         
@@ -322,6 +329,7 @@ def auth_google_callback():
             return jsonify({"error": f"Database error: {result}"}), 500
             
     except Exception as e:
+        print(f"[ERROR] OAuth Exception: {type(e).__name__}: {str(e)}")
         return jsonify({"error": f"OAuth failed: {str(e)}"}), 500
 
 @app.route("/auth/facebook", methods=["GET"])
