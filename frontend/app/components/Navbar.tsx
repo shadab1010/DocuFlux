@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Menu, X, User } from "lucide-react";
@@ -11,10 +12,23 @@ import { useAuth } from "../context/AuthContext";
 import { API_URL } from "@/lib/config";
 
 export default function Navbar() {
-  const { isLoggedIn, user, logout: authLogout } = useAuth();
+  const { isLoggedIn, user, logout: authLogout, isLoading, hasSeenModal, markModalSeen } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authView, setAuthView] = useState<"login" | "signup">("login");
+
+  // Show signup modal on first visit/refresh if not logged in
+  useEffect(() => {
+    // Only show if:
+    // 1. Loading is done
+    // 2. User is NOT logged in
+    // 3. User hasn't seen the modal yet (in this session/refresh)
+    if (!isLoading && !isLoggedIn && !hasSeenModal) {
+      setAuthView("signup");
+      setShowAuthModal(true);
+      markModalSeen();
+    }
+  }, [isLoading, isLoggedIn, hasSeenModal, markModalSeen]);
 
   // Separate states for Desktop Popover and Mobile Modal
   const [showDesktopProfile, setShowDesktopProfile] = useState(false);
@@ -35,7 +49,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Home", href: "/" },
-    { name: "Tools", href: "/tools" },
+    { name: "Tools", href: "/#services" },
     { name: "Pricing", href: "/pricing" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
@@ -65,13 +79,15 @@ export default function Navbar() {
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <div className="flex items-center gap-2">
-              <Link href="/" className="flex items-center gap-2 group">
-                <div className="w-8 h-8 text-emerald-800">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600" />
-                    <path d="M12 2V17.77" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
+            <div className="flex items-center gap-0">
+              <Link href="/" className="flex items-center gap-0 group">
+                <div className="relative w-[48px] h-[48px]">
+                  <Image
+                    src="/logo_new.svg"
+                    alt="DocuFlux Logo"
+                    fill
+                    className="object-contain"
+                  />
                 </div>
                 <span className="text-2xl font-bold text-gray-900 font-display tracking-tight">
                   DocuFlux
@@ -126,6 +142,7 @@ export default function Navbar() {
                     onClick={() => {
                       setAuthView("login");
                       setShowAuthModal(true);
+                      markModalSeen();
                     }}
                     variant="outline"
                     size="sm"
@@ -138,6 +155,7 @@ export default function Navbar() {
                     onClick={() => {
                       setAuthView("signup");
                       setShowAuthModal(true);
+                      markModalSeen();
                     }}
                     variant="primary"
                     size="sm"
@@ -163,27 +181,29 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="lg:hidden absolute top-full left-0 w-full glass border-t border-gray-100 shadow-xl">
-            <div className="px-6 py-6 space-y-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="block text-lg font-medium text-gray-600 hover:text-emerald-700"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <hr className="border-gray-100 my-4" />
-              <div className="flex flex-col gap-3">
+          <div className="lg:hidden absolute top-full left-0 w-full bg-[#FFFCF5] border-t border-gray-200 shadow-xl animate-in slide-in-from-top-2 duration-200">
+            <div className="px-6 py-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              <div className="flex flex-col space-y-2">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    className="block text-lg font-medium text-slate-800 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg px-4 py-3 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
+              <hr className="border-gray-200" />
+              <div className="flex flex-col gap-3 pb-6">
                 {isLoggedIn ? (
                   <button
                     onClick={() => {
                       setShowMobileProfile(true);
                       setIsOpen(false);
                     }}
-                    className="w-full py-3 rounded-xl border border-emerald-600 text-emerald-700 font-bold text-center"
+                    className="w-full py-3 rounded-xl border border-emerald-600 text-emerald-700 font-bold text-center active:scale-95 transition-transform"
                   >
                     My Account
                   </button>
@@ -193,9 +213,10 @@ export default function Navbar() {
                       onClick={() => {
                         setAuthView("login");
                         setShowAuthModal(true);
+                        markModalSeen();
                         setIsOpen(false);
                       }}
-                      className="w-full py-3 rounded-xl border border-emerald-600 text-emerald-700 font-bold text-center"
+                      className="w-full py-3 rounded-xl border border-emerald-600 text-emerald-700 font-bold text-center active:scale-95 transition-transform"
                     >
                       Login
                     </button>
@@ -203,9 +224,10 @@ export default function Navbar() {
                       onClick={() => {
                         setAuthView("signup");
                         setShowAuthModal(true);
+                        markModalSeen();
                         setIsOpen(false);
                       }}
-                      className="w-full py-3 rounded-xl bg-emerald-900 text-white font-bold text-center"
+                      className="w-full py-3 rounded-xl bg-emerald-700 text-white font-bold text-center shadow-lg shadow-emerald-900/10 active:scale-95 transition-transform"
                     >
                       Sign Up
                     </button>
@@ -219,9 +241,13 @@ export default function Navbar() {
 
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={() => {
+          setShowAuthModal(false);
+          markModalSeen();
+        }}
         onLogin={() => {
           setShowAuthModal(false);
+          markModalSeen();
         }}
         initialView={authView}
       />

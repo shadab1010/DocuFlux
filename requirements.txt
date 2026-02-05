@@ -16,3 +16,5 @@ python-dotenv
 gunicorn
 flask-cors
 pandas
+Authlib
+requests

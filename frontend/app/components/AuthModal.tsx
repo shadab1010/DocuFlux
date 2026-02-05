@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { X, LogIn, Eye, EyeOff, Loader2, Mail, Lock, User, Sparkles, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
@@ -84,6 +85,11 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
     }
   };
 
+  const handleSocialLogin = (provider: string) => {
+    // Redirect to backend OAuth endpoint
+    window.location.href = `${API_URL}/auth/${provider}`;
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -93,62 +99,68 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md bg-emerald-950/20"
         >
-          {/* Backdrop */}
           <div
             className="absolute inset-0 cursor-pointer"
             onClick={onClose}
           />
 
-          {/* Modal Content - Reduced dimensions as requested */}
+          {/* Modal Content - Compact Premium UI */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.4, type: "spring", bounce: 0.3 }}
-            className="relative w-full max-w-[360px] bg-white/60 backdrop-blur-2xl rounded-[1.5rem] shadow-2xl border border-white/50 p-6 overflow-hidden"
+            className="relative w-full max-w-[320px] bg-white/80 backdrop-blur-2xl rounded-[1.5rem] shadow-2xl border border-white/60 p-6 overflow-hidden"
           >
+            {/* Ambient Background Gradient Glow */}
+            <div className="absolute -top-20 -right-20 w-32 h-32 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-32 h-32 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
+
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-red-500 transition-colors z-20 rounded-full hover:bg-white/50"
+              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all z-20 rounded-full"
             >
               <X size={18} />
             </button>
 
-            {/* Header Logo - Smaller */}
-            <div className="flex justify-center mb-5">
+            {/* Header Logo - Compact Container */}
+            <div className="flex justify-center mb-4">
               <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                className="relative w-12 h-12 bg-emerald-950 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/20"
+                initial={{ scale: 0.8, rotate: -5 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                className="relative w-12 h-12 bg-gradient-to-br from-emerald-900 to-emerald-950 rounded-xl flex items-center justify-center shadow-xl shadow-emerald-900/20 border border-emerald-800/50"
               >
-                <div className="w-7 h-7 text-emerald-400">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M12 2V17.77" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
+                <div className="relative w-7 h-7">
+                  <Image
+                    src="/logo_new.svg"
+                    alt="Logo"
+                    fill
+                    className="object-contain"
+                  />
                 </div>
               </motion.div>
             </div>
 
-            {/* Title & Tagline - Smaller Text */}
+            {/* Title & Tagline */}
             <div className="text-center mb-5">
               <h2 className="text-2xl font-display font-black text-slate-900 mb-1 tracking-tight">
-                {isSignUp ? "Join " : "Welcome "}
-                <span className="text-emerald-700">Flux</span>
+                {isSignUp ? "Sign Up" : "Login"}
               </h2>
-              <p className="text-slate-500 font-medium text-[11px] max-w-[200px] mx-auto leading-tight">
+              <p className="text-slate-500 font-medium text-[11px] max-w-[200px] mx-auto leading-relaxed">
                 {isSignUp
-                  ? "Create your account to get started."
-                  : "Sign in to continue your journey."}
+                  ? "Create your account today."
+                  : "Login to access your tools."}
               </p>
             </div>
 
             {error && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="mb-4 p-2 rounded-lg bg-red-50 border border-red-100 text-red-600 text-[10px] font-bold text-center"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mb-4 p-2 rounded-lg bg-red-50/80 border border-red-100/50 text-red-600 text-[10px] font-bold text-center flex items-center justify-center gap-1.5 backdrop-blur-sm"
               >
+                <div className="w-1 h-1 rounded-full bg-red-500 animate-pulse" />
                 {error}
               </motion.div>
             )}
@@ -157,9 +169,9 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
               <AnimatePresence mode="popLayout">
                 {isSignUp && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
+                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    animate={{ opacity: 1, height: "auto", marginBottom: 12 }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                     className="overflow-hidden"
                   >
                     <div className="relative group">
@@ -169,7 +181,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
                       <input
                         type="text"
                         placeholder="Full Name"
-                        className="w-full pl-9 pr-3 py-2.5 bg-white/70 border border-slate-200/60 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/30 transition-all text-xs font-bold"
+                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs font-semibold"
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                         required={isSignUp}
@@ -186,7 +198,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
                 <input
                   type="email"
                   placeholder="Email Address"
-                  className="w-full pl-9 pr-3 py-2.5 bg-white/70 border border-slate-200/60 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/30 transition-all text-xs font-bold"
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs font-semibold"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
@@ -200,7 +212,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
-                  className="w-full pl-9 pr-9 py-2.5 bg-white/70 border border-slate-200/60 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/30 transition-all text-xs font-bold"
+                  className="w-full pl-9 pr-9 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs font-semibold"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
@@ -215,8 +227,8 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
               </div>
 
               {!isSignUp && (
-                <div className="flex justify-end pt-0.5">
-                  <button type="button" className="text-[10px] font-bold text-slate-400 hover:text-emerald-700 transition-colors">
+                <div className="flex justify-end">
+                  <button type="button" className="text-[10px] font-bold text-slate-400 hover:text-emerald-600 transition-colors">
                     Forgot Password?
                   </button>
                 </div>
@@ -229,7 +241,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
                   variant="primary"
                   fullWidth
                   size="md"
-                  className="h-10 rounded-lg text-xs font-black shadow-lg shadow-emerald-600/20"
+                  className="h-10 rounded-lg text-xs font-bold shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/30"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center gap-2">
@@ -237,7 +249,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
                       <span>Processing...</span>
                     </div>
                   ) : (
-                    <span>{isSignUp ? "Create Account" : "Sign In"}</span>
+                    <span>{isSignUp ? "Create Account" : "Login"}</span>
                   )}
                 </AnimatedButton>
               </div>
@@ -246,37 +258,41 @@ export default function AuthModal({ isOpen, onClose, onLogin, initialView = "log
             {/* Divider */}
             <div className="relative my-5">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200/60"></div>
+                <div className="w-full border-t border-slate-200"></div>
               </div>
               <div className="relative flex justify-center">
-                <span className="px-2 bg-transparent backdrop-blur-3xl text-[9px] uppercase font-bold text-slate-400">
+                <span className="px-3 bg-white/80 backdrop-blur-3xl text-[9px] uppercase font-bold text-slate-400 tracking-wider">
                   Or continue with
                 </span>
               </div>
             </div>
 
-            {/* Social Login - Smaller */}
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <button className="flex items-center justify-center h-9 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-4 h-4" />
-              </button>
-              <button className="flex items-center justify-center h-9 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-                <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" alt="Facebook" className="w-4 h-4" />
-              </button>
-              <button className="flex items-center justify-center h-9 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-                <img src="https://www.svgrepo.com/show/475641/apple-color.svg" alt="Apple" className="w-4 h-4" />
+            {/* Social Login - Compact */}
+            <div className="mb-4">
+              <button
+                onClick={() => handleSocialLogin('google')}
+                className="flex items-center justify-center w-full h-9 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+                aria-label="Continue with Google"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+                <span className="ml-3 text-sm font-medium text-slate-600">Continue with Google</span>
               </button>
             </div>
 
             {/* Footer */}
-            <div className="text-center pt-2 border-t border-slate-200/40">
+            <div className="text-center">
               <p className="text-[10px] text-slate-500 font-medium">
                 {isSignUp ? "Already have an account? " : "Don't have an account? "}
                 <button
                   onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-emerald-700 hover:text-emerald-900 font-bold transition-colors"
+                  className="text-emerald-700 hover:text-emerald-900 font-bold transition-colors ml-1"
                 >
-                  {isSignUp ? "Sign In" : "Sign Up"}
+                  {isSignUp ? "Login" : "Sign Up"}
                 </button>
               </p>
             </div>

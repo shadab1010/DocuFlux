@@ -5,6 +5,9 @@ import { AuthProvider } from "./context/AuthContext";
 export const metadata: Metadata = {
   title: "DocuFlux - Professional PDF Tools & Document Management",
   description: "Transform, convert, and manage your PDF documents with ease. Free online PDF tools for merging, splitting, converting, and more.",
+  icons: {
+    icon: '/logo_new.svg',
+  },
 };
 
 export default function RootLayout({

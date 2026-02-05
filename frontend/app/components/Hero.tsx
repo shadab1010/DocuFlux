@@ -60,7 +60,7 @@ export default function Hero() {
               className="flex flex-wrap gap-4"
             >
               <AnimatedButton
-                href="/tools/pdf-to-word"
+                href="/#services"
                 variant="primary"
                 size="md"
                 className="shadow-lg shadow-emerald-500/20"

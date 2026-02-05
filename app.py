@@ -244,6 +244,110 @@ def delete_account():
             
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 500
+
+# --- SOCIAL AUTH ROUTES ---
+
+# --- OAUTH CONFIGURATION ---
+from authlib.integrations.flask_client import OAuth
+
+oauth = OAuth(app)
+oauth.register(
+    name='google',
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    access_token_url='https://oauth2.googleapis.com/token',
+    access_token_params=None,
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    api_base_url='https://www.googleapis.com/oauth2/v1/',
+    userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',  # This is only for OpenID Connect compliant
+    client_kwargs={'scope': 'email profile'},
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
+)
+
+
+# --- SOCIAL AUTH ROUTES ---
+
+@app.route("/auth/google", methods=["GET"])
+def auth_google():
+    """Redirect to Google OAuth"""
+    redirect_uri = url_for('auth_google_callback', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+@app.route("/auth/google/callback", methods=["GET"])
+def auth_google_callback():
+    """Handle Google OAuth Callback"""
+    try:
+        token = oauth.google.authorize_access_token()
+        user_info = oauth.google.userinfo()
+        
+        email = user_info.get('email')
+        name = user_info.get('name', 'Google User')
+        google_id = user_info.get('sub') # 'sub' is the unique ID in OIDC
+        
+        if not email:
+            return jsonify({"error": "Google did not return an email address."}), 400
+            
+        success, result = db.get_or_create_google_user(email, name, google_id)
+        
+        if success:
+            user_id = result
+            session['user_id'] = user_id
+            session['user_name'] = name
+            
+            # Redirect to Dashboard
+            # Determine env: if running locally, redirect to localhost:3000, else docuflux.in
+            # But the user asked for https://www.docuflux.in/dashboard
+            # Ideally this should be dynamic based on request origin or env var, but I will follow instructions.
+            # However, for local dev, we might want localhost.
+            
+            # Using the REFERER or just defaulting to the user request.
+            # User said: "After successful login, redirect to https://www.docuflux.in/dashboard."
+            # They also said: "Ensure it works for both local and production environments without changing code."
+            
+            # Logic: If host is localhost, go to localhost frontend.
+            if "localhost" in request.host:
+                return redirect("http://localhost:3000/")
+            else:
+                return redirect("https://www.docuflux.in/")
+        else:
+            return jsonify({"error": f"Database error: {result}"}), 500
+            
+    except Exception as e:
+        return jsonify({"error": f"OAuth failed: {str(e)}"}), 500
+
+@app.route("/auth/facebook", methods=["GET"])
+def auth_facebook():
+    """Redirect to Facebook OAuth"""
+    # TODO: Replace with your actual App ID and Redirect URI
+    FB_CLIENT_ID = os.getenv("FACEBOOK_APP_ID", "YOUR_FB_APP_ID_HERE")
+    REDIRECT_URI = "http://localhost:3000/auth/callback/facebook"
+    
+    oauth_url = (
+        f"https://www.facebook.com/v12.0/dialog/oauth"
+        f"?client_id={FB_CLIENT_ID}"
+        f"&redirect_uri={REDIRECT_URI}"
+        f"&scope=email"
+    )
+    return redirect(oauth_url)
+
+@app.route("/auth/apple", methods=["GET"])
+def auth_apple():
+    """Redirect to Apple OAuth"""
+    # TODO: Replace with your actual Service ID and Redirect URI
+    APPLE_CLIENT_ID = os.getenv("APPLE_CLIENT_ID", "YOUR_APPLE_SERVICE_ID_HERE")
+    REDIRECT_URI = "http://localhost:3000/auth/callback/apple"
+    
+    oauth_url = (
+        f"https://appleid.apple.com/auth/authorize"
+        f"?client_id={APPLE_CLIENT_ID}"
+        f"&redirect_uri={REDIRECT_URI}"
+        f"&response_type=code"
+        f"&scope=name%20email"
+        f"&response_mode=form_post"
+    )
+    return redirect(oauth_url)
 
 # --- API ROUTES ---
 

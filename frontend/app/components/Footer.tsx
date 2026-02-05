@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -10,21 +11,14 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="space-y-6">
             <Link href="/" className="inline-block">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
+              <div className="flex items-center gap-0">
+                <div className="relative w-[48px] h-[48px] rounded-lg overflow-hidden">
+                  <Image
+                    src="/logo_new.svg"
+                    alt="DocuFlux Logo"
+                    fill
+                    className="object-contain"
+                  />
                 </div>
                 <span className="text-xl font-bold text-gray-900">DocuFlux</span>
               </div>

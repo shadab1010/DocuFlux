@@ -11,7 +11,7 @@ class DatabaseManager:
         self.init_db()
     
     def init_db(self):
-        """Initialize database with required tables"""
+        """Initialize database with required tables and handle migrations"""
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
             c.execute('''CREATE TABLE IF NOT EXISTS users (
@@ -21,6 +21,18 @@ class DatabaseManager:
                 password TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )''')
+            
+            # Migration: Add auth_provider and google_id columns if they don't exist
+            try:
+                c.execute("ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'local'")
+            except sqlite3.OperationalError:
+                pass # Column likely exists
+
+            try:
+                c.execute("ALTER TABLE users ADD COLUMN google_id TEXT")
+            except sqlite3.OperationalError:
+                pass # Column likely exists
+
             conn.commit()
     
     def create_user(self, email, name, password):
@@ -32,7 +44,8 @@ class DatabaseManager:
             hashed_pw = generate_password_hash(password)
             with sqlite3.connect(self.db_path) as conn:
                 c = conn.cursor()
-                c.execute("INSERT INTO users (email, name, password) VALUES (?, ?, ?)", 
+                # Use default 'local' for auth_provider
+                c.execute("INSERT INTO users (email, name, password, auth_provider) VALUES (?, ?, ?, 'local')", 
                          (email, name, hashed_pw))
                 conn.commit()
                 
@@ -62,32 +75,38 @@ class DatabaseManager:
         except Exception as e:
             return False, None, str(e)
     
-    def get_or_create_user(self, email, name):
+    def get_or_create_google_user(self, email, name, google_id):
         """
-        Get user if exists, create if not (for OAuth)
-        Returns: (user_id: int)
+        Get existing user or create new one via Google OAuth
+        Returns: (success: bool, user_id: int or error: str)
         """
         try:
             with sqlite3.connect(self.db_path) as conn:
                 c = conn.cursor()
                 
                 # Check if user exists
-                c.execute("SELECT id FROM users WHERE email = ?", (email,))
-                user = c.fetchone()
+                c.execute("SELECT id, auth_provider FROM users WHERE email = ?", (email,))
+                row = c.fetchone()
                 
-                if user:
-                    return user[0]
+                if row:
+                    user_id, provider = row
+                    # If existing user logs in with Google, we can link it
+                    if provider == 'local':
+                        c.execute("UPDATE users SET auth_provider = 'google', google_id = ? WHERE id = ?", (google_id, user_id))
+                        conn.commit()
+                    return True, user_id
                 
-                # Create new user with OAuth
-                c.execute("INSERT INTO users (email, name, password) VALUES (?, ?, ?)", 
-                         (email, name, generate_password_hash("oauth_user")))
+                # Create new Google user
+                # Generate a random password since it won't be used but schema requires it
+                random_pw = generate_password_hash(f"google_auth_{google_id}")
+                
+                c.execute("INSERT INTO users (email, name, password, auth_provider, google_id) VALUES (?, ?, ?, ?, ?)", 
+                         (email, name, random_pw, 'google', google_id))
                 conn.commit()
                 
-                c.execute("SELECT id FROM users WHERE email = ?", (email,))
-                user_id = c.fetchone()[0]
-                return user_id
+                return True, c.lastrowid
         except Exception as e:
-            raise Exception(f"Database error: {str(e)}")
+            return False, str(e)
 
     def update_user(self, user_id, name=None, password=None):
         """

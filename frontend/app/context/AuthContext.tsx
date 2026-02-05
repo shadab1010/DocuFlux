@@ -16,6 +16,8 @@ interface AuthContextType {
     login: (userData: User) => void;
     logout: () => void;
     checkAuth: () => Promise<void>;
+    hasSeenModal: boolean;
+    markModalSeen: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +26,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+
+
+    const [hasSeenModal, setHasSeenModal] = useState(false);
 
     const checkAuth = async () => {
         setIsLoading(true);
@@ -62,8 +67,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoggedIn(false);
     };
 
+    const markModalSeen = () => {
+        setHasSeenModal(true);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isLoggedIn, isLoading, login, logout, checkAuth }}>
+        <AuthContext.Provider value={{ user, isLoggedIn, isLoading, login, logout, checkAuth, hasSeenModal, markModalSeen }}>
             {children}
         </AuthContext.Provider>
     );

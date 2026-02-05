@@ -267,12 +267,17 @@ Professional Output
 ✓ Install LibreOffice for best results
 
 ---
-## database 
+### Database Administration
+  
+**Read all users:**
 ```bash
 python read_users.py
-
-###delete email by admin 
+```
+  
+**Delete a user by email:**
+```bash
 python delete_by_email.py
+```
 ## ✅ Verification
 
 Run this command to verify installation:
