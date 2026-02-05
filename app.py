@@ -71,7 +71,8 @@ CORS(
         "https://www.docuflux.in",
         "https://docu-flux.vercel.app",
         "https://docuflux-frontend.onrender.com",
-        "http://localhost:3000" 
+        "http://localhost:3000",
+        "http://localhost:5000"  # Backend origin for OAuth redirects
     ]
 )
 
