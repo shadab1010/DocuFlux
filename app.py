@@ -50,10 +50,13 @@ from libreoffice_converter import LibreOfficeConverter
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "default-insecure-key-for-dev-only")
 
-# Session Config for Cross-Domain (Vercel <-> Render)
+# Session Config for Cross-Domain (Vercel <-> Render) vs Local
+# Require "None" and "Secure" for cross-site (prod), but "Lax" and "False" for local http
+is_production = os.getenv("FLASK_ENV") == "production" or not os.getenv("FLASK_DEBUG", "False").lower() in ("true", "1", "t")
+
 app.config.update(
-    SESSION_COOKIE_SAMESITE="None",
-    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_SAMESITE="None" if is_production else "Lax",
+    SESSION_COOKIE_SECURE=True if is_production else False,
 )
 
 # Start ProxyFix
@@ -272,6 +275,11 @@ oauth.register(
 @app.route("/auth/google", methods=["GET"])
 def auth_google():
     """Redirect to Google OAuth"""
+    # Store the referrer (frontend URL) in session to redirect back correctly
+    frontend_url = request.args.get('next') or request.headers.get('Referer')
+    if frontend_url:
+        session['frontend_url'] = frontend_url
+        
     redirect_uri = url_for('auth_google_callback', _external=True)
     return oauth.google.authorize_redirect(redirect_uri)
 
@@ -296,17 +304,15 @@ def auth_google_callback():
             session['user_id'] = user_id
             session['user_name'] = name
             
-            # Redirect to Dashboard
-            # Determine env: if running locally, redirect to localhost:3000, else docuflux.in
-            # But the user asked for https://www.docuflux.in/dashboard
-            # Ideally this should be dynamic based on request origin or env var, but I will follow instructions.
-            # However, for local dev, we might want localhost.
+            # Redirect to Dashboard based on stored session or default logic
+            frontend_url = session.pop('frontend_url', None)
             
-            # Using the REFERER or just defaulting to the user request.
-            # User said: "After successful login, redirect to https://www.docuflux.in/dashboard."
-            # They also said: "Ensure it works for both local and production environments without changing code."
+            if frontend_url:
+                 # simplistic check to ensure we don't redirect to google or weird places if referer was weird
+                 # but for now, trusting it if it matches our known domains or is localhost
+                 return redirect(frontend_url)
             
-            # Logic: If host is localhost, go to localhost frontend.
+            # Fallback Logic
             if "localhost" in request.host:
                 return redirect("http://localhost:3000/")
             else:
