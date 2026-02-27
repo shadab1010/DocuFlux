@@ -65,11 +65,16 @@ def secure_upload_file(file, upload_folder, allowed_exts=None):
         return False, f"Error saving file: {str(e)}"
 
 
+import shutil
+
 def cleanup_file(file_path):
-    """Safely remove a file"""
+    """Safely remove a file or directory"""
     try:
         if os.path.exists(file_path):
-            os.remove(file_path)
+            if os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+            else:
+                os.remove(file_path)
     except Exception:
         pass
 

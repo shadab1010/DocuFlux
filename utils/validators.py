@@ -19,18 +19,29 @@ def validate_password(password, min_length=6):
 
 
 def validate_page_range(page_range_str, total_pages):
-    """Validate page range format (e.g., '1-5')"""
+    """Validate and parse page range format (e.g., '1-5' or '1,3,5-7')"""
     try:
-        parts = page_range_str.split('-')
-        if len(parts) != 2:
-            return False, "Invalid format. Use 'start-end'"
+        ranges = []
+        parts = page_range_str.split(',')
+        for part in parts:
+            part = part.strip()
+            if '-' in part:
+                range_parts = part.split('-')
+                if len(range_parts) != 2:
+                    return False, f"Invalid format in part: {part}"
+                start, end = int(range_parts[0]), int(range_parts[1])
+                if start < 1 or end > total_pages or start > end:
+                    return False, f"Invalid range in part {part}. Must be between 1-{total_pages}"
+                ranges.append((start, end))
+            elif part.isdigit():
+                val = int(part)
+                if val < 1 or val > total_pages:
+                    return False, f"Invalid page number {val}. Must be between 1-{total_pages}"
+                ranges.append((val, val))
+            else:
+                return False, f"Invalid character in range: {part}"
         
-        start, end = int(parts[0]), int(parts[1])
-        
-        if start < 1 or end > total_pages or start > end:
-            return False, f"Invalid range. Must be between 1-{total_pages}"
-        
-        return True, (start, end)
+        return True, ranges
     except ValueError:
         return False, "Invalid page numbers"
 

@@ -110,3 +110,89 @@ h5,
 h6 {
   font-family: var(--font-display);
 }
+
+/* PDF Text Layer Styles */
+.react-pdf__Page__textContent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  opacity: 1;
+  line-height: 1;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.react-pdf__Page__textContent {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  opacity: 1;
+  line-height: 1;
+  pointer-events: auto !important;
+  z-index: 10;
+}
+
+.react-pdf__Page__textContent span {
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+  transition: none;
+  user-select: text;
+  pointer-events: auto !important;
+  -webkit-user-select: text;
+}
+
+/* When span is in edit mode */
+.react-pdf__Page__textContent span[contenteditable="true"] {
+  outline: 1px solid rgba(16, 185, 129, 0.5) !important;
+  background-color: rgba(16, 185, 129, 0.08) !important;
+  padding: 0 2px !important;
+  border-radius: 2px;
+  caret-color: #10b981;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3) !important;
+  /* Preserve typography */
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  color: inherit !important;
+  letter-spacing: inherit !important;
+  line-height: inherit !important;
+  pointer-events: auto !important;
+}
+
+/* Subtle hover effect */
+.react-pdf__Page__textContent span:hover {
+  background-color: rgba(16, 185, 129, 0.05);
+  border-radius: 2px;
+}
+
+/* Ensure text elements are always on top */
+.text-element {
+  z-index: 40 !important;
+}
+
+.text-element textarea,
+.text-element div,
+.text-element input {
+  position: relative;
+  z-index: 60 !important;
+}
+
+/* Inline editing input styles */
+input[id^="edit-"] {
+  font-family: inherit !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+input[id^="edit-"]:focus {
+  border-color: #10B981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}

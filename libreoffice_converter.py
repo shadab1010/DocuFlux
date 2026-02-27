@@ -20,6 +20,11 @@ class DocumentConverter:
     
     # LibreOffice paths
     LIBREOFFICE_PATHS = [
+        # Linux / Docker paths
+        "/usr/bin/libreoffice",
+        "/usr/bin/soffice",
+        # Windows paths
+        r"C:\LibreOffice_Portable\App\libreoffice\program\soffice.exe",
         r"C:\Program Files\LibreOffice\program\soffice.exe",
         r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
         r"C:\Program Files\LibreOffice 7\program\soffice.exe",

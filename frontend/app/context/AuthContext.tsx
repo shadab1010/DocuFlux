@@ -7,6 +7,8 @@ interface User {
     id: number;
     name: string;
     email: string;
+    role: "super_admin" | "admin" | "support" | "user";
+    status: "active" | "banned";
 }
 
 interface AuthContextType {
@@ -14,7 +16,7 @@ interface AuthContextType {
     isLoggedIn: boolean;
     isLoading: boolean;
     login: (userData: User) => void;
-    logout: () => void;
+    logout: () => Promise<void>;
     checkAuth: () => Promise<void>;
     hasSeenModal: boolean;
     markModalSeen: () => void;
@@ -62,9 +64,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoggedIn(true);
     };
 
-    const logout = () => {
-        setUser(null);
-        setIsLoggedIn(false);
+    const logout = async () => {
+        try {
+            await fetch(`${API_URL}/logout`, {
+                method: "POST",
+                credentials: "include",
+            });
+        } catch (error) {
+            console.error("Logout failed:", error);
+        } finally {
+            setUser(null);
+            setIsLoggedIn(false);
+        }
     };
 
     const markModalSeen = () => {

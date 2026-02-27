@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Phone, MapPin, Send } from "lucide-react";
+import { Mail, Phone, MapPin, Send, Facebook, Instagram, Linkedin } from "lucide-react";
 import AnimatedButton from "./ui/AnimatedButton";
 
 export default function Contact() {
@@ -12,9 +12,34 @@ export default function Contact() {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    setLoading(true);
+    setError("");
+    setSuccess(false);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccess(true);
+        setFormData({ name: "", email: "", subject: "", message: "" });
+      } else {
+        setError(data.error || "Failed to send message");
+      }
+    } catch (err) {
+      setError("Connection error. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -71,11 +96,15 @@ export default function Contact() {
 
             {/* Social Icons */}
             <div className="relative z-10 mt-12 flex gap-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="w-8 h-8 rounded-full border border-emerald-500/50 hover:bg-emerald-800 transition cursor-pointer flex items-center justify-center text-emerald-200">
-                  <div className="w-4 h-4 bg-current rounded-full opacity-50" />
-                </div>
-              ))}
+              <a href="https://www.facebook.com/shabab.alam.16121" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full border border-emerald-500/50 hover:bg-emerald-800 transition cursor-pointer flex items-center justify-center text-emerald-200">
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a href="https://www.instagram.com/shadab_iraqe/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full border border-emerald-500/50 hover:bg-emerald-800 transition cursor-pointer flex items-center justify-center text-emerald-200">
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a href="https://www.linkedin.com/in/itsshadab/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full border border-emerald-500/50 hover:bg-emerald-800 transition cursor-pointer flex items-center justify-center text-emerald-200">
+                <Linkedin className="w-5 h-5" />
+              </a>
             </div>
           </div>
 
@@ -131,14 +160,26 @@ export default function Contact() {
                 />
               </div>
 
+              {success && (
+                <div className="mb-8 p-4 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100 font-bold text-sm">
+                  Message sent successfully! We'll get back to you soon.
+                </div>
+              )}
+              {error && (
+                <div className="mb-8 p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 font-bold text-sm">
+                  {error}
+                </div>
+              )}
+
               <div>
                 <AnimatedButton
                   type="submit"
                   variant="primary"
                   size="md"
-                  className="w-full md:w-auto shadow-lg shadow-emerald-900/20"
+                  className="w-full md:w-auto shadow-lg shadow-emerald-900/20 disabled:opacity-70"
+                  disabled={loading}
                 >
-                  Send Message <Send className="w-4 h-4 ml-2" />
+                  {loading ? "Sending..." : "Send Message"} <Send className="w-4 h-4 ml-2" />
                 </AnimatedButton>
               </div>
             </form>

@@ -23,7 +23,8 @@ WORKDIR /app
 COPY requirements.txt /app/
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    playwright install chromium --with-deps
 
 # Copy the current directory contents into the container at /app
 COPY . /app/

@@ -15,6 +15,7 @@ interface AnimatedButtonProps {
     fullWidth?: boolean;
     type?: "button" | "submit" | "reset";
     disabled?: boolean;
+    as?: "button" | "div" | "span";
 }
 
 export default function AnimatedButton({
@@ -27,6 +28,7 @@ export default function AnimatedButton({
     fullWidth = false,
     type = "button",
     disabled = false,
+    as = "button",
 }: AnimatedButtonProps) {
     const baseStyles = "relative inline-flex items-center justify-center font-semibold transition-all duration-300 overflow-hidden rounded-lg group active:scale-95 animate-shine";
 
@@ -83,15 +85,16 @@ export default function AnimatedButton({
         );
     }
 
+    const Component = as === "div" ? motion.div : as === "span" ? motion.span : motion.button;
+
     return (
-        <motion.button
-            type={type}
+        <Component
+            {...(as === "button" ? { type, disabled } : {})}
             onClick={onClick}
-            disabled={disabled}
             className={combinedClasses}
             {...animationProps}
         >
             {content}
-        </motion.button>
+        </Component>
     );
 }

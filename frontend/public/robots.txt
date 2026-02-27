@@ -1,0 +1,17 @@
+# DocuFlux Robots.txt
+# This file tells search engines which pages to crawl and index
+
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Disallow private/admin areas (if any)
+Disallow: /api/
+Disallow: /.next/
+Disallow: /uploads/
+
+# Crawl delay (be nice to servers)
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://docuflux.onrender.com/sitemap.xml

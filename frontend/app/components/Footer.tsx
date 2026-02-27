@@ -27,10 +27,9 @@ export default function Footer() {
               Professional PDF tools made simple. Convert, edit, and secure your documents with enterprise-grade precision.
             </p>
             <div className="flex items-center gap-4">
-              <SocialLink href="#" icon={<FacebookIcon />} />
-              <SocialLink href="#" icon={<TwitterIcon />} />
-              <SocialLink href="#" icon={<InstagramIcon />} />
-              <SocialLink href="#" icon={<LinkedinIcon />} />
+              <SocialLink href="https://www.facebook.com/shabab.alam.16121" icon={<FacebookIcon />} />
+              <SocialLink href="https://www.instagram.com/shadab_iraqe/" icon={<InstagramIcon />} />
+              <SocialLink href="https://www.linkedin.com/in/itsshadab/" icon={<LinkedinIcon />} />
             </div>
           </div>
 
@@ -119,6 +118,8 @@ function SocialLink({ href, icon }: { href: string; icon: React.ReactNode }) {
   return (
     <a
       href={href}
+      target="_blank"
+      rel="noopener noreferrer"
       className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all"
     >
       {icon}

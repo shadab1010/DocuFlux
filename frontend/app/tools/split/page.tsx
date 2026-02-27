@@ -5,26 +5,63 @@ import ToolLayout from "../../components/ToolLayout";
 import { Upload, Split, CheckCircle2, Loader2, Scissors, Sparkles } from "lucide-react";
 import AnimatedButton from "../../components/ui/AnimatedButton";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_URL } from "@/lib/config";
 
 export default function SplitPDFPage() {
   const [file, setFile] = useState<File | null>(null);
   const [splitting, setSplitting] = useState(false);
   const [splitted, setSplitted] = useState(false);
+  const [pageRanges, setPageRanges] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
       setSplitted(false);
+      setError(null);
     }
   };
 
   const handleSplit = async () => {
     if (!file) return;
     setSplitting(true);
-    setTimeout(() => {
-      setSplitting(false);
+    setError(null);
+    console.log("Starting split process...");
+    console.log("Target API_URL:", API_URL);
+    console.log("File:", file.name, "Size:", file.size);
+    console.log("Ranges:", pageRanges || "ALL");
+
+    try {
+      const formData = new FormData();
+      formData.append("pdf", file);
+      formData.append("pageRanges", pageRanges);
+
+      const response = await fetch(`${API_URL}/split-pdf`, {
+        method: "POST",
+        body: formData,
+      });
+
+      console.log("Response status:", response.status, response.statusText);
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to split PDF");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = blob.type === "application/zip" ? "split_files.zip" : "split.pdf";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
       setSplitted(true);
-    }, 3000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSplitting(false);
+    }
   };
 
   return (
@@ -73,7 +110,7 @@ export default function SplitPDFPage() {
                     Extract pages with single-click precision.
                   </p>
                   <label className="cursor-pointer">
-                    <AnimatedButton variant="primary" size="md" className="px-10 h-12 rounded-xl shadow-xl shadow-emerald-900/10">
+                    <AnimatedButton as="div" variant="primary" size="md" className="px-10 h-12 rounded-xl shadow-xl shadow-emerald-900/10">
                       Select Files <Upload className="w-3 h-3 ml-2 opacity-50" />
                     </AnimatedButton>
                     <input type="file" accept=".pdf" onChange={handleFileChange} className="hidden" />
@@ -91,11 +128,29 @@ export default function SplitPDFPage() {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                   <div className="bg-gray-50/50 p-6 rounded-[1.5rem] border border-gray-100 relative overflow-hidden">
                     <div className="flex justify-between items-center mb-1">
-                      <h4 className="text-base font-display font-bold text-gray-950">Extraction</h4>
-                      <div className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[8px] font-bold rounded uppercase tracking-widest">Auto</div>
+                      <h4 className="text-base font-display font-bold text-gray-950">Extraction Mode</h4>
+                      <div className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[8px] font-bold rounded uppercase tracking-widest">
+                        {pageRanges.trim() === "" ? "Split All Pages" : "Custom Ranges"}
+                      </div>
                     </div>
-                    <p className="text-gray-500 text-[10px] font-sans">Every page will become a separate PDF.</p>
+                    <p className="text-gray-500 text-[10px] font-sans mb-4">
+                      {pageRanges.trim() === ""
+                        ? "Every page will be extracted as an individual PDF and bundled into a ZIP file."
+                        : "Only specified pages will be extracted."}
+                    </p>
+
+                    <input
+                      type="text"
+                      placeholder="e.g. 1-3, 5, 8-10 (Leave empty for all)"
+                      value={pageRanges}
+                      onChange={(e) => setPageRanges(e.target.value)}
+                      className="w-full px-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white"
+                    />
                   </div>
+
+                  {error && (
+                    <p className="text-red-500 text-xs text-center font-medium bg-red-50 py-2 rounded-lg">{error}</p>
+                  )}
 
                   <AnimatedButton
                     onClick={handleSplit}
@@ -129,10 +184,9 @@ export default function SplitPDFPage() {
                       "Individual pages extracted perfectly."
                     </p>
 
-                    <AnimatedButton variant="secondary" fullWidth size="md" className="h-11 rounded-lg bg-white text-emerald-950 font-bold shadow-md border-none text-sm">
-                      Download Assets (ZIP)
-                    </AnimatedButton>
-                    <button onClick={() => { setFile(null); setSplitted(false); }} className="mt-4 text-emerald-400 hover:text-white text-[8px] font-bold uppercase tracking-[0.3em] transition-all opacity-40 hover:opacity-100">
+                    <p className="text-emerald-50 text-[11px] mb-6">Your document has been split and downloaded.</p>
+
+                    <button onClick={() => { setFile(null); setSplitted(false); setPageRanges(""); }} className="mt-4 text-emerald-400 hover:text-white text-[8px] font-bold uppercase tracking-[0.3em] transition-all opacity-40 hover:opacity-100">
                       New Split
                     </button>
                   </div>

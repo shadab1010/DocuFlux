@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import {
-  FileText, Image, Merge as MergeIcon, SplitSquareHorizontal, FileArchive, Edit,
+  FileText, Image, Merge as MergeIcon, SplitSquareHorizontal, FileArchive,
   FileSpreadsheet, Presentation, Sparkles, FolderOpen, ShieldCheck, RefreshCw,
-  ScanLine, Lock, Unlock, PenTool, Type, FileCode, Crop, Eraser, Files, Maximize,
-  Pipette, Stamp
+  Lock, Unlock, PenTool, Type, FileCode,
+  Stamp
 } from "lucide-react";
 
 const services = [
@@ -25,7 +25,6 @@ const services = [
   { icon: MergeIcon, title: "Merge PDF", description: "Combine multiple PDFs", href: "/tools/merge" },
   { icon: SplitSquareHorizontal, title: "Split PDF", description: "Extract pages from PDF", href: "/tools/split" },
   { icon: FileArchive, title: "Compress PDF", description: "Reduce file size", href: "/tools/compress" },
-  { icon: Edit, title: "Edit PDF", description: "Add text, shapes & images", href: "/tools/edit-pdf" },
 
   // Advanced Tools (Row 3)
   { icon: PenTool, title: "Sign PDF", description: "Add electronic signatures", href: "/tools/sign" },
@@ -37,16 +36,9 @@ const services = [
 
   // Row 4
   { icon: FolderOpen, title: "Organize PDF", description: "Sort, delete, and rearrange pages", href: "/tools/organize" },
-  { icon: FileText, title: "PDF to PDF/A", description: "Convert to ISO-standardized PDF", href: "/tools/pdf-a" },
+  { icon: FileText, title: "PDF to PDF/A", description: "Convert to ISO-standardized PDF", href: "/tools/pdfa" },
   { icon: RefreshCw, title: "Repair PDF", description: "Recover data from corrupt PDF", href: "/tools/repair" },
-  { icon: Type, title: "Page Numbers", description: "Add page numbers to PDF", href: "/tools/page-numbers" },
-  { icon: ScanLine, title: "Scan to PDF", description: "Capture docs from mobile", href: "/tools/scan" },
-  { icon: Sparkles, title: "OCR PDF", description: "Make scanned text searchable", href: "/tools/ocr" },
-
-  // Row 5
-  { icon: Files, title: "Compare PDF", description: "Side-by-side comparison", href: "/tools/compare" },
-  { icon: Eraser, title: "Redact PDF", description: "Permanently remove sensitive info", href: "/tools/redact" },
-  { icon: Crop, title: "Crop PDF", description: "Trim margins of PDF pages", href: "/tools/crop" }
+  { icon: Type, title: "Page Numbers", description: "Add page numbers to PDF", href: "/tools/page-numbers" }
 ];
 
 export default function Services() {

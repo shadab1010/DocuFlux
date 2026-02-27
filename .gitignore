@@ -66,3 +66,7 @@ frontend/*.tsbuildinfo
 
 # OS
 Thumbs.db
+
+# Ghostscript local bin
+gs/
+gs_install.exe

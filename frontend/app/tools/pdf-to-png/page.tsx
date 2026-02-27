@@ -73,7 +73,7 @@ export default function PDFToPNGPage() {
                     Perfect for designers. Extract crisp PNG assets.
                   </p>
                   <label className="cursor-pointer">
-                    <AnimatedButton variant="primary" size="md" className="px-10 h-12 rounded-xl shadow-xl shadow-emerald-900/10">
+                    <AnimatedButton as="div" variant="primary" size="md" className="px-10 h-12 rounded-xl shadow-xl shadow-emerald-900/10">
                       Import Project <Upload className="w-3 h-3 ml-2 opacity-50" />
                     </AnimatedButton>
                     <input type="file" accept=".pdf" onChange={handleFileChange} className="hidden" />
