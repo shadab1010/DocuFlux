@@ -19,3 +19,4 @@ pandas
 Authlib
 requests
 playwright
+pypandoc

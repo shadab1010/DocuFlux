@@ -1,47 +1,88 @@
-# Use an official Python runtime as a parent image
+# Use Python slim image
 FROM python:3.10-slim
 
-# Set environment variables
+# Environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=app.py
+# Set HOME so LibreOffice can write its profile in Docker
+ENV HOME=/root
+# Prevent LibreOffice from trying to open a display
+ENV DISPLAY=:0
 
-# Pre-accept EULA for mscorefonts and install system dependencies
-RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections && \
-    apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+# ─── Step 1: System packages for document conversion ───────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # ── LibreOffice core (headless only, no full desktop) ──
     libreoffice \
-    default-jre \
+    libreoffice-writer \
+    libreoffice-calc \
+    libreoffice-impress \
+    libreoffice-java-common \
+    # ── Java runtime (needed by LibreOffice for some filters) ──
+    default-jre-headless \
+    # ── Pandoc (used as fallback converter in libreoffice_converter.py) ──
+    pandoc \
+    # ── PDF utilities ──
     ghostscript \
     poppler-utils \
+    # ── OCR support ──
     tesseract-ocr \
+    tesseract-ocr-eng \
+    # ── Font packages (critical for accurate PDF/Word rendering) ──
+    # Liberation fonts: open-source metrically-compatible with Arial, Times New Roman, Courier New
     fonts-liberation \
-    ttf-mscorefonts-installer \
-    cabextract \
-    fontconfig \
+    fonts-liberation2 \
+    # DejaVu – good Unicode coverage
+    fonts-dejavu-core \
+    fonts-dejavu-extra \
+    # FreeFont – extra coverage
+    fonts-freefont-ttf \
+    # Crosextra fonts (Carlito ≈ Calibri, Caladea ≈ Cambria) – critical for .docx accuracy
     fonts-crosextra-carlito \
     fonts-crosextra-caladea \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && fc-cache -f -v
+    # Noto fonts – cover most Unicode scripts (emoji, CJK, Arabic, etc.)
+    fonts-noto-core \
+    fonts-noto-mono \
+    # WenQuanYi for CJK characters
+    fonts-wqy-zenhei \
+    # ── Font tooling ──
+    fontconfig \
+    # ── General utilities ──
+    curl \
+    wget \
+    ca-certificates \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory in the container
+# ─── Step 2: Rebuild font cache so LibreOffice picks everything up ─────────────
+RUN fc-cache -f -v
+
+# ─── Step 3: Configure LibreOffice for headless use ───────────────────────────
+# Create a persistent profile directory that LibreOffice can use as a base
+RUN mkdir -p /root/.config/libreoffice
+
+# ─── Step 4: Set working directory and install Python packages ─────────────────
 WORKDIR /app
 
-# Copy the requirements file into the container
+# Copy requirements first (leverages Docker layer caching)
 COPY requirements.txt /app/
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt && \
-    playwright install chromium --with-deps
+# Install Python packages
+RUN pip install --no-cache-dir --upgrade pip \
+ && pip install --no-cache-dir -r requirements.txt
 
-# Copy the current directory contents into the container at /app
+# ─── Step 5: Install Playwright browser ────────────────────────────────────────
+RUN playwright install chromium --with-deps
+
+# ─── Step 6: Copy application code ─────────────────────────────────────────────
 COPY . /app/
 
-# Create uploads directory
-RUN mkdir -p /app/uploads
+# ─── Step 7: Create necessary directories ──────────────────────────────────────
+RUN mkdir -p /app/uploads \
+ && mkdir -p /tmp/lo_profiles
 
-# Expose Render's expected port
+# Expose port for Render
 EXPOSE 10000
 
-# Run gunicorn when the container launches
+# Run the application
 CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:10000"]
