@@ -73,7 +73,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 CORS(
     app,
     supports_credentials=True,
-    origins=["*"] if not is_production else [
+    origins=["http://localhost:3000", "http://127.0.0.1:3000"] if not is_production else [
         "https://docuflux.in",
         "https://www.docuflux.in",
         "https://docu-flux.vercel.app",

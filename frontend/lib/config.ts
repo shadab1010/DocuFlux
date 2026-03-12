@@ -6,15 +6,8 @@ const getBaseUrl = () => {
 
     if (typeof window !== "undefined") {
         const hostname = window.location.hostname;
-        const isLocal =
-            hostname === "localhost" ||
-            hostname === "127.0.0.1" ||
-            hostname.startsWith("192.168.") ||
-            hostname.startsWith("172.") ||
-            hostname.startsWith("10.");
-
-        if (isLocal) {
-            return "http://" + hostname + ":5000";
+        if (hostname === "localhost" || hostname === "127.0.0.1") {
+            return "http://localhost:5000";
         }
     }
 

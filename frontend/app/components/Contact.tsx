@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, Phone, MapPin, Send, Facebook, Instagram, Linkedin } from "lucide-react";
 import AnimatedButton from "./ui/AnimatedButton";
+import emailjs from "@emailjs/browser";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -16,6 +17,15 @@ export default function Contact() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -23,20 +33,41 @@ export default function Contact() {
     setSuccess(false);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/contact`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
-      if (data.success) {
+      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "";
+      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "";
+      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || "";
+
+      if (!serviceId || !templateId || !publicKey || templateId === "YOUR_TEMPLATE_ID_HERE" || publicKey === "YOUR_PUBLIC_KEY_HERE") {
+        setError("Email service is not fully configured. Please provide Template ID and Public Key.");
+        setLoading(false);
+        return;
+      }
+
+      const templateParams = {
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        to_name: "DocuFlux Team",
+        reply_to: formData.email,
+      };
+
+      const result = await emailjs.send(
+        serviceId,
+        templateId,
+        templateParams,
+        publicKey
+      );
+
+      if (result.status === 200) {
         setSuccess(true);
         setFormData({ name: "", email: "", subject: "", message: "" });
       } else {
-        setError(data.error || "Failed to send message");
+        setError("Failed to send message. Please try again.");
       }
-    } catch (err) {
-      setError("Connection error. Please try again later.");
+    } catch (err: any) {
+      console.error("EmailJS Error:", err);
+      setError(err?.text || "Connection error. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -72,7 +103,7 @@ export default function Contact() {
                   <Phone className="w-6 h-6 mt-1 text-emerald-200" />
                   <div>
                     <p className="text-sm opacity-70 mb-1 uppercase tracking-wider text-emerald-100">Call Us</p>
-                    <a href="tel:+15550000000" className="text-lg font-medium hover:text-white transition">+1 (555) 000-0000</a>
+                    <a href="tel:+15550000000" className="text-lg font-medium hover:text-white transition">+91 1234567890</a>
                   </div>
                 </div>
 
@@ -88,7 +119,7 @@ export default function Contact() {
                   <MapPin className="w-6 h-6 mt-1 text-emerald-200" />
                   <div>
                     <p className="text-sm opacity-70 mb-1 uppercase tracking-wider text-emerald-100">Visit Us</p>
-                    <p className="text-lg font-medium leading-snug">100 Smith Street,<br />Melbourne VIC 3000 AU</p>
+                    <p className="text-lg font-medium leading-snug">Chandigarh University,<br />North Campus,NCH Hostel</p>
                   </div>
                 </div>
               </div>

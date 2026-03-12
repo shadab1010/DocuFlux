@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 
@@ -17,6 +18,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-JX3W1CFZTL"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-JX3W1CFZTL');
+          `}
+        </Script>
+      </head>
       <body className="antialiased font-sans text-gray-900 bg-[#FFFCF5]" suppressHydrationWarning>
         <AuthProvider>
           {children}
