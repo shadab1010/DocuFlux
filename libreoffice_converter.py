@@ -90,13 +90,25 @@ class DocumentConverter:
             return False
         
         try:
+            import uuid
             output_dir = os.path.dirname(output_path) or '.'
             os.makedirs(output_dir, exist_ok=True)
             
+            # Use a unique user installation path to prevent profile lock issues in Docker/concurrent environments
+            profile_dir = f"/tmp/lo_profile_{uuid.uuid4().hex}"
+            
+            # Force high fidelity margin and layout rendering for PDFs
+            export_format = output_format
+            if output_format.lower() == 'pdf':
+                export_format = 'pdf:writer_pdf_Export'
+                
             cmd = [
                 tools['libreoffice'],
+                f'-env:UserInstallation=file://{profile_dir}',
                 '--headless',
-                '--convert-to', output_format,
+                '--nologo',
+                '--nofirststartwizard',
+                '--convert-to', export_format,
                 '--outdir', output_dir,
                 input_path
             ]
@@ -104,8 +116,18 @@ class DocumentConverter:
             print(f"Converting with LibreOffice: {input_path} -> {output_format}")
             result = subprocess.run(cmd, capture_output=True, timeout=timeout, text=True)
             
+            # Clean up the temporary profile directory
+            try:
+                import shutil
+                if os.path.exists(profile_dir):
+                    shutil.rmtree(profile_dir, ignore_errors=True)
+            except Exception as e:
+                print(f"Failed to clean up LO profile: {e}")
+                
             if result.returncode != 0:
-                print(f"LibreOffice error: {result.stderr}")
+                print(f"LibreOffice error (Return Code {result.returncode})")
+                print(f"STDOUT: {result.stdout}")
+                print(f"STDERR: {result.stderr}")
                 return False
             
             time.sleep(0.5)

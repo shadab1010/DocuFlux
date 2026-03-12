@@ -93,10 +93,13 @@ def _enhance_word_document(docx_path, pdf_path):
                         size = char.get('size', 11)
                         if fontname and fontname != 'unknown':
                             key = f"{fontname}_{size}"
-                            font_info[key] = {
-                                'name': _normalize_font_name(fontname),
-                                'size': int(size)
-                            }
+                            if key not in font_info:
+                                font_info[key] = {
+                                    'name': _normalize_font_name(fontname),
+                                    'size': int(size),
+                                    'count': 0
+                                }
+                            font_info[key]['count'] += 1
         except Exception as e:
             print(f"Font extraction warning (non-critical): {e}")
             return  # Don't fail if font extraction doesn't work
@@ -105,8 +108,8 @@ def _enhance_word_document(docx_path, pdf_path):
         if font_info:
             try:
                 doc = Document(docx_path)
-                # Find common fonts and update styles
-                most_common_font = max(font_info.items(), key=lambda x: x[1]['size'])[1]
+                # Find most common font based on character count rather than largest size
+                most_common_font = max(font_info.values(), key=lambda x: x['count'])
                 
                 # Update default font for all paragraphs
                 for para in doc.paragraphs:

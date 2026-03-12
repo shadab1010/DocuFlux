@@ -6,15 +6,23 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=app.py
 
-# Install system dependencies including LibreOffice and Java (required for some LO ops)
-RUN apt-get update && apt-get install -y \
+# Pre-accept EULA for mscorefonts and install system dependencies
+RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections && \
+    apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libreoffice \
     default-jre \
     ghostscript \
     poppler-utils \
     tesseract-ocr \
+    fonts-liberation \
+    ttf-mscorefonts-installer \
+    cabextract \
+    fontconfig \
+    fonts-crosextra-carlito \
+    fonts-crosextra-caladea \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && fc-cache -f -v
 
 # Set the working directory in the container
 WORKDIR /app
