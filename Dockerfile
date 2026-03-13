@@ -63,10 +63,6 @@ RUN fc-cache -f -v
 # Create a persistent profile directory that LibreOffice can use as a base
 RUN mkdir -p /root/.config/libreoffice
 
-# ─── Step 3b: Start Xvfb virtual display so LibreOffice has a display server ──
-# This is a background process — we use a startup script to launch it alongside gunicorn
-RUN Xvfb :99 -screen 0 1024x768x24 &
-
 # ─── Step 4: Set working directory and install Python packages ─────────────────
 WORKDIR /app
 
