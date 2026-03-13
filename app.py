@@ -127,23 +127,45 @@ DB_PATH = os.path.join(BASE_DIR, "users.db")
 db = DatabaseManager(DB_PATH)
 
 # --- ADMIN SEEDER ---
-# Automatically promote ADMIN_EMAIL to super_admin on startup (safe & idempotent)
+# Automatically create or promote ADMIN_EMAIL to super_admin on startup
 def seed_super_admin():
     admin_email = os.getenv("ADMIN_EMAIL")
+    admin_password = os.getenv("ADMIN_PASSWORD") or "admin_shadab9262" # Default if not in env
+    
     if not admin_email:
+        print("[ADMIN SEEDER] Skipping: ADMIN_EMAIL not set in environment.")
         return
+        
     try:
-        import sqlite3 as _sqlite3
-        with _sqlite3.connect(DB_PATH) as conn:
-            row = conn.execute("SELECT id, role FROM users WHERE email = ?", (admin_email,)).fetchone()
-            if row and row[1] != "super_admin":
-                conn.execute("UPDATE users SET role = 'super_admin' WHERE email = ?", (admin_email,))
+        hashed_password = generate_password_hash(admin_password)
+        
+        with sqlite3.connect(DB_PATH) as conn:
+            c = conn.cursor()
+            # Check if user exists
+            row = c.execute("SELECT id, role, password FROM users WHERE email = ?", (admin_email,)).fetchone()
+            
+            if not row:
+                # Create user if doesn't exist
+                c.execute("""
+                    INSERT INTO users (email, name, password, auth_provider, role, status) 
+                    VALUES (?, ?, ?, 'local', 'super_admin', 'active')
+                """, (admin_email, "Super Admin", hashed_password))
                 conn.commit()
-                print(f"[ADMIN SEEDER] Promoted {admin_email} to super_admin")
-            elif row:
-                print(f"[ADMIN SEEDER] {admin_email} is already super_admin")
+                print(f"[ADMIN SEEDER] Created new super_admin: {admin_email}")
             else:
-                print(f"[ADMIN SEEDER] No user found with email: {admin_email}")
+                user_id, role, current_pw = row
+                # Update role if not super_admin
+                if role != "super_admin":
+                    c.execute("UPDATE users SET role = 'super_admin' WHERE id = ?", (user_id,))
+                    print(f"[ADMIN SEEDER] Promoted {admin_email} to super_admin")
+                
+                # Update password if it doesn't match the one in ENV (idempotent update)
+                # We can't easily check hash equality, but we can force update if ADMIN_PASSWORD is set explicitly
+                if os.getenv("ADMIN_PASSWORD"):
+                    c.execute("UPDATE users SET password = ? WHERE id = ?", (hashed_password, user_id))
+                    print(f"[ADMIN SEEDER] Updated password for {admin_email}")
+                
+                conn.commit()
     except Exception as e:
         print(f"[ADMIN SEEDER] Error: {e}")
 
