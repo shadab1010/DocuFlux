@@ -7,8 +7,8 @@ ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=app.py
 # Set HOME so LibreOffice can write its profile in Docker
 ENV HOME=/root
-# Prevent LibreOffice from trying to open a display
-ENV DISPLAY=:0
+# Headless mode for LibreOffice (no real display needed)
+ENV DISPLAY=:99
 
 # ─── Step 1: System packages for document conversion ───────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -51,6 +51,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
     ca-certificates \
+    # ── Xvfb: virtual display for LibreOffice headless (prevents display errors) ──
+    xvfb \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
@@ -60,6 +62,10 @@ RUN fc-cache -f -v
 # ─── Step 3: Configure LibreOffice for headless use ───────────────────────────
 # Create a persistent profile directory that LibreOffice can use as a base
 RUN mkdir -p /root/.config/libreoffice
+
+# ─── Step 3b: Start Xvfb virtual display so LibreOffice has a display server ──
+# This is a background process — we use a startup script to launch it alongside gunicorn
+RUN Xvfb :99 -screen 0 1024x768x24 &
 
 # ─── Step 4: Set working directory and install Python packages ─────────────────
 WORKDIR /app
@@ -85,4 +91,4 @@ RUN mkdir -p /app/uploads \
 EXPOSE 10000
 
 # Run the application
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:10000"]
+CMD ["bash", "-c", "Xvfb :99 -screen 0 1024x768x24 -nolisten tcp & sleep 1 && gunicorn app:app --bind 0.0.0.0:10000 --timeout 120 --workers 2"]

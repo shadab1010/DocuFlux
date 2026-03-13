@@ -226,6 +226,32 @@ def pdf_to_word(pdf_path, output_path):
         except Exception as e:
             return False, f"Invalid PDF file: {str(e)}"
 
+        # Attempt 0: Custom Layout Reconstruction Engine (Best for exact layout fidelity)
+        try:
+            print("Attempting Custom Document Reconstruction Engine...")
+            try:
+                # Try relative import (when called as a module from utils package context)
+                from .document_reconstruction import DocumentReconstructionEngine
+            except ImportError:
+                try:
+                    # Try absolute import (when app root is in pythonpath e.g. Flask from root)
+                    from utils.document_reconstruction import DocumentReconstructionEngine
+                except ImportError:
+                    # Direct path append fallback
+                    import sys
+                    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+                    from document_reconstruction import DocumentReconstructionEngine
+            
+            engine = DocumentReconstructionEngine(pdf_path)
+            success, result = engine.convert(output_path)
+            if success and os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                print("Custom Reconstruction Engine succeeded.")
+                return True, output_path
+            else:
+                print("Custom Reconstruction Engine failed or returned empty file.")
+        except Exception as e:
+            print(f"Custom Reconstruction Engine exception: {e}. Attempting fallback...")
+
         # Attempt 1: pdf2docx with enhanced layout detection (Best for structured PDFs)
         try:
             converter = Converter(pdf_path)

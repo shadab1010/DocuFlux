@@ -126,6 +126,29 @@ cleanup_thread.start()
 DB_PATH = os.path.join(BASE_DIR, "users.db")
 db = DatabaseManager(DB_PATH)
 
+# --- ADMIN SEEDER ---
+# Automatically promote ADMIN_EMAIL to super_admin on startup (safe & idempotent)
+def seed_super_admin():
+    admin_email = os.getenv("ADMIN_EMAIL")
+    if not admin_email:
+        return
+    try:
+        import sqlite3 as _sqlite3
+        with _sqlite3.connect(DB_PATH) as conn:
+            row = conn.execute("SELECT id, role FROM users WHERE email = ?", (admin_email,)).fetchone()
+            if row and row[1] != "super_admin":
+                conn.execute("UPDATE users SET role = 'super_admin' WHERE email = ?", (admin_email,))
+                conn.commit()
+                print(f"[ADMIN SEEDER] Promoted {admin_email} to super_admin")
+            elif row:
+                print(f"[ADMIN SEEDER] {admin_email} is already super_admin")
+            else:
+                print(f"[ADMIN SEEDER] No user found with email: {admin_email}")
+    except Exception as e:
+        print(f"[ADMIN SEEDER] Error: {e}")
+
+seed_super_admin()
+
 # Check for LibreOffice at startup
 try:
     from libreoffice_converter import LibreOfficeConverter
