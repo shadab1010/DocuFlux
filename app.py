@@ -49,7 +49,7 @@ from utils.pdf_converter import (
     add_watermark_to_pdf, add_page_numbers_to_pdf, add_image_to_pdf,
     draw_rectangle_on_pdf, draw_circle_on_pdf, highlight_text_in_pdf,
     blank_page_in_pdf, draw_line_on_pdf, apply_multiple_edits,
-    pdf_to_images
+    pdf_to_images, pdf_to_powerpoint
 )
 from libreoffice_converter import LibreOfficeConverter
 
@@ -133,7 +133,7 @@ def seed_super_admin():
     admin_password = os.getenv("ADMIN_PASSWORD") or "admin_shadab9262" # Default if not in env
     
     if not admin_email:
-        print("[ADMIN SEEDER] Skipping: ADMIN_EMAIL not set in environment.")
+        print("[ADMIN SEEDER] Skipping: ADMIN_EMAIL not set in environment.", flush=True)
         return
         
     try:
@@ -151,25 +151,51 @@ def seed_super_admin():
                     VALUES (?, ?, ?, 'local', 'super_admin', 'active')
                 """, (admin_email, "Super Admin", hashed_password))
                 conn.commit()
-                print(f"[ADMIN SEEDER] Created new super_admin: {admin_email}")
+                print(f"[ADMIN SEEDER] Created new super_admin: {admin_email}", flush=True)
             else:
                 user_id, role, current_pw = row
                 # Update role if not super_admin
                 if role != "super_admin":
                     c.execute("UPDATE users SET role = 'super_admin' WHERE id = ?", (user_id,))
-                    print(f"[ADMIN SEEDER] Promoted {admin_email} to super_admin")
+                    print(f"[ADMIN SEEDER] Promoted {admin_email} to super_admin", flush=True)
                 
                 # Update password if it doesn't match the one in ENV (idempotent update)
                 # We can't easily check hash equality, but we can force update if ADMIN_PASSWORD is set explicitly
                 if os.getenv("ADMIN_PASSWORD"):
                     c.execute("UPDATE users SET password = ? WHERE id = ?", (hashed_password, user_id))
-                    print(f"[ADMIN SEEDER] Updated password for {admin_email}")
+                    print(f"[ADMIN SEEDER] Updated password for {admin_email}", flush=True)
                 
                 conn.commit()
     except Exception as e:
-        print(f"[ADMIN SEEDER] Error: {e}")
+        print(f"[ADMIN SEEDER] Error: {e}", flush=True)
 
 seed_super_admin()
+
+@app.route("/debug-admin", methods=["GET"])
+def debug_admin():
+    """Check if the admin user exists in the database (simple status check)"""
+    admin_email = os.getenv("ADMIN_EMAIL")
+    if not admin_email:
+        return jsonify({"status": "error", "message": "ADMIN_EMAIL not set"}), 400
+        
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            row = conn.execute("SELECT id, role FROM users WHERE email = ?", (admin_email,)).fetchone()
+            if row:
+                return jsonify({
+                    "status": "ok",
+                    "admin_found": True,
+                    "email": admin_email,
+                    "role": row[1]
+                })
+            else:
+                return jsonify({
+                    "status": "ok",
+                    "admin_found": False,
+                    "email": admin_email
+                })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # Check for LibreOffice at startup
 try:
@@ -744,7 +770,7 @@ def convert_p2ppt():
         if not success: return jsonify({"error": "Upload failed"}), 400
         
         output_path = os.path.splitext(path)[0] + ".pptx"
-        success = LibreOfficeConverter.convert(path, output_path, output_format="pptx")
+        success, result_path = pdf_to_powerpoint(path, output_path)
         
         if success:
             db.log_processed_file(session.get('user_id'), "pdf_to_powerpoint", "success")

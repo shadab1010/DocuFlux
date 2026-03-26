@@ -226,7 +226,27 @@ def pdf_to_word(pdf_path, output_path):
         except Exception as e:
             return False, f"Invalid PDF file: {str(e)}"
 
-        # Attempt 0: Custom Layout Reconstruction Engine (Best for exact layout fidelity)
+        # Attempt 0: pdf2docx with enhanced layout detection (Best for structured PDFs)
+        try:
+            print("Attempting pdf2docx for conversion...")
+            converter = Converter(pdf_path)
+            # Enable layout preservation and font detection
+            converter.convert(output_path, start=0, end=None)
+            converter.close()
+            
+            # Post-process to enhance font and structure preservation
+            try:
+                _enhance_word_document(output_path, pdf_path)
+            except Exception as enhance_e:
+                print(f"Enhancement failed (non-critical): {enhance_e}")
+            
+            # Double check output
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                 return True, output_path
+        except Exception as e:
+            print(f"pdf2docx failed: {e}. Attempting fallback...")
+
+        # Attempt 1: Custom Layout Reconstruction Engine (Fallback if pdf2docx fails)
         try:
             print("Attempting Custom Document Reconstruction Engine...")
             try:
@@ -251,25 +271,6 @@ def pdf_to_word(pdf_path, output_path):
                 print("Custom Reconstruction Engine failed or returned empty file.")
         except Exception as e:
             print(f"Custom Reconstruction Engine exception: {e}. Attempting fallback...")
-
-        # Attempt 1: pdf2docx with enhanced layout detection (Best for structured PDFs)
-        try:
-            converter = Converter(pdf_path)
-            # Enable layout preservation and font detection
-            converter.convert(output_path, start=0, end=None)
-            converter.close()
-            
-            # Post-process to enhance font and structure preservation
-            try:
-                _enhance_word_document(output_path, pdf_path)
-            except Exception as enhance_e:
-                print(f"Enhancement failed (non-critical): {enhance_e}")
-            
-            # Double check output
-            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                 return True, output_path
-        except Exception as e:
-            print(f"pdf2docx failed: {e}. Attempting fallback...")
         
         # Attempt 2: LibreOffice Fallback (Best for scanned/complex PDFs)
         try:
@@ -371,26 +372,53 @@ def word_to_pdf(word_path, output_path):
 
 
 def pdf_to_excel(pdf_path, output_path):
-    """Extract tables from PDF and convert to Excel"""
+    """Extract tables or text from PDF and convert to Excel"""
     try:
+        from openpyxl.styles import Alignment
         workbook = Workbook()
         workbook.remove(workbook.active)
         
         with pdfplumber.open(pdf_path) as pdf:
             for page_num, page in enumerate(pdf.pages):
+                ws = workbook.create_sheet(title=f"Page_{page_num + 1}")
                 tables = page.extract_tables()
                 
+                has_content = False
+                
                 if tables:
+                    row_offset = 1
                     for table_idx, table in enumerate(tables):
-                        ws = workbook.create_sheet(title=f"Page_{page_num + 1}_Table_{table_idx + 1}")
                         for row_idx, row in enumerate(table):
                             for col_idx, cell in enumerate(row):
-                                ws.cell(row=row_idx + 1, column=col_idx + 1, value=cell)
-        
-        # Remove empty sheet if created
+                                if cell is not None:
+                                    # Clean up text for excel
+                                    cleaned_text = str(cell).replace('\n', ' ').strip()
+                                    ws.cell(row=row_offset, column=col_idx + 1, value=cleaned_text)
+                            row_offset += 1
+                        row_offset += 2  # spacing between tables
+                    has_content = True
+                
+                # If no tables were found, extract regular text and output line by line preserving basic vertical order
+                if not has_content:
+                    text = page.extract_text(layout=True)
+                    if not text:
+                         text = page.extract_text() # fallback to basic text
+                         
+                    if text:
+                        lines = [line for line in text.split('\n') if line.strip()]
+                        for row_idx, line in enumerate(lines):
+                            cell = ws.cell(row=row_idx + 1, column=1, value=line.strip())
+                            cell.alignment = Alignment(wrap_text=True)
+                        has_content = True
+                
+                # Adjust column A width for readability if it was mostly text
+                if not tables and has_content:
+                    ws.column_dimensions['A'].width = 100
+                    
+        # Remove empty sheet if created and no other sheets were populated
         if len(workbook.sheetnames) == 0:
-            ws = workbook.create_sheet("Sheet1")
-        
+            workbook.create_sheet("Sheet1")
+            
         workbook.save(output_path)
         return True, output_path
     except Exception as e:
@@ -868,3 +896,49 @@ def apply_multiple_edits(pdf_path, output_path, edits):
         return True, output_path
     except Exception as e:
         return False, str(e)
+
+
+def pdf_to_powerpoint(pdf_path, output_path):
+    """Convert PDF to PowerPoint by rendering pages as high-quality slide images"""
+    try:
+        import os
+        import io
+        import fitz
+        from pptx import Presentation
+        from pptx.util import Inches
+        
+        if not os.path.exists(pdf_path):
+            return False, "PDF file not found"
+            
+        prs = Presentation()
+        pdf_doc = fitz.open(pdf_path)
+        
+        if len(pdf_doc) > 0:
+            page = pdf_doc[0]
+            width_in = page.rect.width / 72.0
+            height_in = page.rect.height / 72.0
+            prs.slide_width = Inches(width_in)
+            prs.slide_height = Inches(height_in)
+
+        blank_slide_layout = prs.slide_layouts[6] 
+        
+        for page_num in range(len(pdf_doc)):
+            page = pdf_doc[page_num]
+            mat = fitz.Matrix(3, 3) 
+            pix = page.get_pixmap(matrix=mat)
+            img_stream = io.BytesIO(pix.tobytes("png"))
+            
+            slide = prs.slides.add_slide(blank_slide_layout)
+            slide.shapes.add_picture(
+                img_stream, 
+                0, 0, 
+                width=prs.slide_width, 
+                height=prs.slide_height
+            )
+            
+        prs.save(output_path)
+        pdf_doc.close()
+        return True, output_path
+
+    except Exception as e:
+        return False, f"PowerPoint conversion error: {str(e)}"

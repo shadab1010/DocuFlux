@@ -97,10 +97,16 @@ class DocumentConverter:
             # Use a unique user installation path to prevent profile lock issues in Docker/concurrent environments
             profile_dir = f"/tmp/lo_profile_{uuid.uuid4().hex}"
             
-            # Force high fidelity margin and layout rendering for PDFs
+            # Determine correct PDF export filter based on input file type
             export_format = output_format
             if output_format.lower() == 'pdf':
-                export_format = 'pdf:writer_pdf_Export'
+                ext = os.path.splitext(input_path)[1].lower()
+                if ext in ['.xlsx', '.xls', '.csv']:
+                    export_format = 'pdf:calc_pdf_Export'
+                elif ext in ['.pptx', '.ppt', '.odp']:
+                    export_format = 'pdf:impress_pdf_Export'
+                else:
+                    export_format = 'pdf:writer_pdf_Export'
                 
             cmd = [
                 tools['libreoffice'],
