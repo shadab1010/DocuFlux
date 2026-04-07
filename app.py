@@ -953,42 +953,42 @@ def protect_pdf_route():
 @app.route('/unlock-pdf', methods=['POST'])
 def unlock_pdf_route():
     try:
+        import pikepdf
         if 'pdf' not in request.files: return jsonify({"error": "No file"}), 400
         password = request.form.get('password', '')
         
         file = request.files['pdf']
         success, path = secure_upload_file(file, UPLOAD_FOLDER)
         
-        doc = fitz.open(path)
+        output_path = os.path.join(UPLOAD_FOLDER, f"unlocked_{os.urandom(4).hex()}.pdf")
         
-        if doc.needs_pass:
-            is_unlocked = False
-            
-            # 1. Try provided password
-            if password and doc.authenticate(password):
-                is_unlocked = True
-            # 2. Try empty password (bypasses owner protection)
-            elif doc.authenticate(""):
-                is_unlocked = True
-            else:
-                # 3. Simple dictionary attack with common passwords
+        is_unlocked = False
+        pdf = None
+        try:
+            # 1. Try with the provided password (or empty which unlocks owner passwords in pikepdf)
+            pdf = pikepdf.open(path, password=password)
+            is_unlocked = True
+        except pikepdf.PasswordError:
+            # 2. Try common dictionary passwords if no specific password was provided
+            if not password:
                 common_passwords = [
                     "1234", "123456", "password", "test", "0000", "1111",
                     "admin", "123123", "qwerty", "pdf", "123", "12345"
                 ]
                 for cp in common_passwords:
-                    if doc.authenticate(cp):
+                    try:
+                        pdf = pikepdf.open(path, password=cp)
                         is_unlocked = True
                         break
-                        
-            if not is_unlocked:
-                doc.close()
-                cleanup_files([path])
-                return jsonify({"error": "Could not crack the PDF. Please provide the correct password."}), 400
-                
-        output_path = os.path.join(UPLOAD_FOLDER, f"unlocked_{os.urandom(4).hex()}.pdf")
-        doc.save(output_path)
-        doc.close()
+                    except pikepdf.PasswordError:
+                        continue
+        
+        if not is_unlocked:
+            cleanup_files([path])
+            return jsonify({"error": "Could not crack the PDF. Please provide the correct password."}), 400
+            
+        pdf.save(output_path)
+        pdf.close()
         
         with open(output_path, "rb") as f:
             out = io.BytesIO(f.read())

@@ -19,6 +19,8 @@ export default function UnlockPage() {
     const [processing, setProcessing] = useState(false);
     const [complete, setComplete] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [password, setPassword] = useState("");
+    const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,6 +57,9 @@ export default function UnlockPage() {
         try {
             const formData = new FormData();
             formData.append('pdf', file);
+            if (password) {
+                formData.append('password', password);
+            }
 
             const response = await fetch(`${API_URL}/unlock-pdf`, {
                 method: 'POST',
@@ -68,13 +73,15 @@ export default function UnlockPage() {
 
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
+            setDownloadUrl(url);
             const link = document.createElement('a');
             link.href = url;
             link.download = `unlocked_${file.name}`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            // We do not strictly revoke here as the user might click the download button later.
+            // URL.revokeObjectURL(url);
 
             setComplete(true);
         } catch (err) {
@@ -162,9 +169,8 @@ export default function UnlockPage() {
                                             file={fileUrl}
                                             loading={<Loader2 className="w-6 h-6 animate-spin text-gray-300" />}
                                             onPassword={(callback: any) => {
-                                                // We intentionally don't provide the password here so it shows the default react-pdf password prompt or fails gracefully.
-                                                // Actually, react-pdf natively prompts for password if we don't handle it. Let's just catch it.
-                                                callback("");
+                                                // If we have a password, try it for the preview, else ignore
+                                                callback(password || "");
                                             }}
                                             error={
                                                 <div className="text-center p-4">
@@ -225,6 +231,23 @@ export default function UnlockPage() {
                                         <p className="text-red-500 text-xs font-semibold mb-4 text-center p-3 bg-red-50 rounded-lg">{error}</p>
                                     )}
 
+                                    <div className="mb-4">
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1" htmlFor="password">
+                                            Password (if required)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="Enter password to unlock"
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm transition-shadow"
+                                        />
+                                        <p className="text-[10px] text-gray-400 mt-1">
+                                            For owner restrictions, just click Unlock. For locked documents (like Aadhaar), provide the password here to permanently remove it.
+                                        </p>
+                                    </div>
+
                                     {/* Spacer to push button to bottom */}
                                     <div className="flex-1"></div>
 
@@ -237,16 +260,29 @@ export default function UnlockPage() {
                                     <h4 className="text-lg font-bold text-gray-900 mb-2">Unlocked Successfully</h4>
                                     <p className="text-sm text-gray-500 mb-6">Your document is now restriction-free.</p>
 
-                                    <button
-                                        onClick={() => {
-                                            setFile(null);
-                                            setFileUrl(null);
-                                            setComplete(false);
-                                        }}
-                                        className="text-sm font-semibold text-emerald-500 hover:text-emerald-600 uppercase tracking-widest"
-                                    >
-                                        Unlock Another
-                                    </button>
+                                    <div className="flex flex-col gap-3 w-full px-4">
+                                        {downloadUrl && (
+                                            <a
+                                                href={downloadUrl}
+                                                download={`unlocked_${file?.name || 'document.pdf'}`}
+                                                className="w-full py-3 px-6 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm rounded-lg flex items-center justify-center transition-all shadow-md"
+                                            >
+                                                Download PDF
+                                            </a>
+                                        )}
+                                        <button
+                                            onClick={() => {
+                                                setFile(null);
+                                                setFileUrl(null);
+                                                setComplete(false);
+                                                if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+                                                setDownloadUrl(null);
+                                            }}
+                                            className="text-sm font-semibold text-emerald-500 hover:text-emerald-600 uppercase tracking-widest mt-2"
+                                        >
+                                            Unlock Another
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
